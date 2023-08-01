@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+body {
+    min-height: 100vh;
+}
+
+.leftside,
+.rightside {
+    height: 100vh;
+    width: 100%;
+}
+
+.leftside {
+    background-color: black;
+    
+}
+
+.rightside {
+    background-color: #00ced1;
+    position: relative;
+}
+.main-header {
+    margin: 10px;
+    text-align: center;
+    font-size: 1.05rem;
+    padding:0% 10% 0% 10%;
+}
+.main-card-1{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border-radius: 5px;
+}
+.main-btn-1 {
+    text-decoration: none;
+    background-color: #00ced1;
+    color: black;
+    padding: 10px 20px;
+    border: none;
+    outline: none;
+    transition: 0.3s;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+     font-size: 1.05rem;
+}
+.main-btn-2 {
+    text-decoration: none;
+    color: #00ced1;
+    background-color: black;
+    padding: 10px 20px;
+    border: none;
+    outline: none;
+    transition: 0.3s;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+     font-size: 1.05rem;
+}

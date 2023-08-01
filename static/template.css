@@ -1,0 +1,308 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: #c5e8b7;
+}
+
+.home-container {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background-color: #fcfcfc;
+  /* background: linear-gradient(to top, #56e2d7 0%, #58cff1 100%); */
+}
+
+
+.header {
+  margin: 60px;
+  text-align: center;
+}
+
+.home-card {
+  border-radius: 10px;
+  box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.3);
+  width: 600px;
+  height: 350px;
+  background-color: #ffffff;
+  padding: 10px 30px 40px;
+  margin: auto;
+  position: absolute;
+  top: 30%;
+  left: 30%;
+}
+
+.unsuccessful-card {
+  border-radius: 10px;
+  box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.3);
+  width: 600px;
+  height: 200px;
+  background-color: #ffffff;
+  padding: 10px 30px 40px;
+  margin: auto;
+  position: absolute;
+  top: 30%;
+  left: 30%;
+}
+
+.home-card h3 {
+  font-size: 22px;
+  font-weight: 600;
+
+}
+
+.drop_box {
+  margin: 10px 0;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 3px dotted #a3a3a3;
+  border-radius: 5px;
+}
+
+.drop_box h4 {
+  font-size: 16px;
+  font-weight: 400;
+  color: #2e2e2e;
+}
+
+.drop_box p {
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: #a3a3a3;
+}
+
+.home-btn {
+  text-decoration: none;
+  background-color: #57c84d;
+  /* background-color: #58cff1; */
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  outline: none;
+  transition: 0.3s;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.unsuccessful-btn {
+  text-decoration: none;
+  background-color: #57c84d;
+  /* background-color: #58cff1; */
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  outline: none;
+  transition: 0.3s;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.home-btn:hover {
+  text-decoration: none;
+  background-color: #ffffff;
+  color: #57c84d;
+  /* color:#58cff1; */
+  padding: 10px 20px;
+  border: none;
+  outline: 1px solid #010101;
+}
+
+.form input {
+  margin: 10px 0;
+  width: 100%;
+  background-color: #e2e2e2;
+  border: none;
+  outline: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+}
+
+
+input[type="file"] {
+  display: none;
+}
+
+#file-upload {
+  border: 1px solid #ccc;
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+#submit-result {
+  text-decoration: none;
+  background-color: #57c84d;
+  display: inline-block;
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  outline: none;
+  transition: 0.3s;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+
+#submit-result:hover {
+  text-decoration: none;
+  background-color: #ffffff;
+  color: #57c84d;
+  padding: 10px 20px;
+  border: none;
+  outline: 1px solid #010101;
+}
+
+.error {
+  color: red;
+}
+
+.graphs {
+  display: flexbox;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8%;
+}
+
+.successful-container input[type="submit"] {
+  display: none;
+}
+
+.container {
+  height: 50vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c5e8b7;
+}
+
+.results-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c5e8b7;
+}
+
+.card {
+  border-radius: 10px;
+  box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.3);
+  width: 500px;
+  height: 200px;
+  background-color: #ffffff;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+table {
+  width: 750px;
+  border-collapse: collapse;
+  margin: 50px auto;
+}
+
+.rwd-table {
+  color: #333;
+  border-radius: .6em;
+  overflow: hidden;
+}
+
+/* Zebra striping */
+tr:nth-of-type(odd) {
+  background: #eee;
+}
+
+tr:nth-of-type(even) {
+  background: white;
+}
+
+th {
+  background: #57c84d;
+  color: white;
+}
+
+td,
+th {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+  font-size: 18px;
+}
+
+/* 
+Max width before this PARTICULAR table gets nasty
+This query will take effect for any screen smaller than 760px
+and also iPads specifically.
+*/
+@media only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 1024px) {
+
+  table {
+    width: 100%;
+  }
+
+  /* Force table to not be like tables anymore */
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  /* Hide table headers (but not display: none;, for accessibility) */
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    border: 1px solid #ccc;
+  }
+
+  td {
+    /* Behave  like a "row" */
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    padding-left: 50%;
+  }
+
+  td:before {
+    /* Now like a table header */
+    position: absolute;
+    /* Top/left values mimic padding */
+    top: 6px;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    /* Label the data */
+    content: attr(data-column);
+
+    color: #000;
+    /* font-weight: bold; */
+  }
+
+  .graphs {
+    margin-left: 0px;
+  }
+
+}

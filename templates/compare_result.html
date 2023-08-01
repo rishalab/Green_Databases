@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Query Executor - Results</title>
+	<link rel="stylesheet" href="../static/ecodb_compare_result.css">
+</head>
+<body>
+	<div class="compare-container container-xxl">
+		<div class="row no-gutters">
+			<div class="col-d-6 no-gutters">
+				<div class="leftside d-flex align-items-center justify-content-center">
+					<header style="color: #00ced1;margin-left: 40%;margin-bottom: 2%;position: relative;padding-top: 2%;">
+						<h2>SQL Query</h2>
+					</header>
+					<div class="result-card ">
+						<table class="rwd-table">
+							<thead>
+								<tr>
+									<th>Resource Consumption Metrics</th>
+									<th>Results</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>CPU Consumption</td>
+									<td>{{ sql_cpu_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>RAM Consumption</td>
+									<td>{{ sql_ram_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>Total Consumption</td>
+									<td>{{ sql_total_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>CO2 Emissions</td>
+									<td>{{ sql_co2_emissions }} kg CO2</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="col-d-6 no-gutters">
+				<div class="rightside d-flex align-items-center justify-content-center">
+					<header style="color: #00ced1;margin-left: 30%;margin-bottom: 2%;position: relative;padding-top: 2%;">
+						<h2>Comparitive Analysis</h2>
+					</header>
+					<div class="result-card ">
+						<table class="rwd-table">
+							<thead>
+								<tr>
+									<th>Resource Consumption Metrics</th>
+									<th>Results</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td> Efficient Total Consumption</td>
+									<td>{{ efficient_total_consumption }}</td>
+								</tr>
+								<tr>
+									<td>Efficient CO2 Emissions</td>
+									<td>{{ efficient_co2_emissions }}  </td>
+								</tr>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row no-gutters">
+			<div class="col-d-6 no-gutters">
+				<div class="leftside-1 d-flex align-items-center justify-content-center">
+					<header style="color: #00ced1;margin-left: 40%;margin-bottom: 2%;position: relative;padding-top: 2%;">
+						<h2>NO SQL Query</h2>
+					</header>
+					<div class="result-card ">
+						<table class="rwd-table">
+							<thead>
+								<tr>
+									<th>Resource Consumption Metrics</th>
+									<th>Results</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>CPU Consumption</td>
+									<td>{{ nosql_cpu_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>RAM Consumption</td>
+									<td>{{ nosql_ram_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>Total Consumption</td>
+									<td>{{ nosql_total_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>CO2 Emissions</td>
+									<td>{{ nosql_co2_emissions }} kg CO2</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="col-d-6 no-gutters">
+				<div class="rightside-1 d-flex align-items-center justify-content-center">
+					<header style="color: #00ced1;margin-left: 30%;margin-bottom: 2%;position: relative;padding-top: 2%;">
+						<h2>Real World Equivalents</h2>
+					</header>
+					<div class="result-card">
+							<div class="equi">
+								<div class="d-flex align-items-end justify-content-between" style="margin-right: 20%;">
+									<p style="margin-bottom: 2%;">Miles Equivalence</p>
+									<img src="../static/mileage.png" alt="mile" style="margin-bottom: 4%;">
+									<p>{{ mile_eqivalents }} miles</p>
+								</div>
+								<div class="d-flex align-items-end justify-content-between" style="margin-left: 40%;">
+									<p style="margin-bottom: 2%;">TV Watch Time</p>
+									<img src="../static/watching-tv.png" alt="tv" style="margin-bottom: 4%;">
+									<p>{{ tv_minutes }} minutes</p>
+								</div>
+							</div>
+						
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

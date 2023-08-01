@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>EcoDB</title>
+    <link rel="stylesheet" href="../static/comparision.css">
+</head>
+<body>
+    <div class="container-xxl">
+        <form method="POST" action="{{ url_for('compare') }}">
+            <div class="row no-gutters">
+                <div class="col-md-6 no-gutters">
+                    <div class="leftside d-flex align-items-center justify-content-center">
+                        <div class="comp-card">
+                            <div class="sql">
+                                <div class="comp-wrapper">
+                                    <header style="color: #00ced1;">
+                                        <h4 class="headings">SQL Query</h4>
+                                    </header>
+                                    <textarea spellcheck="false" name="sql_query" id="sql_query" placeholder="Enter the Query"
+                                        rows="10" cols="50"></textarea>
+                                </div>
+                                <div class="comp-box">
+                                    <header style="color: #00ced1;">
+                                        <h4 class="headings">Database Name</h4>
+                                    </header>
+                                    <input placeholder="Database Name" class="comp-dbname" spellcheck="false"
+                                        type="text" name="sql_db_name" id="sql_db_name">
+                                    <header style="color: #00ced1;">
+                                        <h4 class="headings">Database Password</h4>
+                                    </header>
+                                    <input placeholder="Database Password" class="comp-dbname" spellcheck="false"
+                                        type="password" name="password" id="password">
+                                </div>
+                            </div>
+                            {% if not_query %}
+                            <p class="error">{{ not_query }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 no-gutters">
+                    <div class="rightside d-flex align-items-center justify-content-center">
+                        <div class="comp-card">
+                            <div class="no-sql">
+                                <div class="comp-wrapper">
+                                    <header>
+                                        <h4 class="headings">NO-SQL Query</h4>
+                                    </header>
+                                    <textarea spellcheck="false" name="nosql_query" id="nosql_query" placeholder="Enter the Query"
+                                        rows="10" cols="50"></textarea>
+                                </div>
+                                <div class="comp-box">
+                                    <header>
+                                        <h4 class="headings">Database Name</h4>
+                                    </header>
+                                    <input placeholder="Database Name" class="comp-dbname" spellcheck="false"
+                                        type="text" name="nosql_db_name" id="nosql_db_name">
+                                </div>
+                            </div>
+                            {% if not_query %}
+                            <p class="error">{{ not_query }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4"></div>
+                <div class="col-3">
+                    <input class="btn  btn-block result-btn" type="submit" value="Results">
+                </div>
+                <div class="col-4"></div>
+
+
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <title>EcoPyD</title>
+  <link rel="stylesheet" href="../static/main.css">
+</head>
+<body>
+  <div class="container-xxl">
+    <div class="row no-gutters">
+      <div class="col-md-6 no-gutters">
+        <div class="leftside d-flex align-items-center justify-content-center">
+          
+          <div class="main-card">
+            <header class="main-header">
+              <h2 style="color: #00ced1;">EcoPy</h2>
+              <p style="color: #00ced1;">
+                Simply upload your python code file, ecoPy Calculates the energy consumption and carbon footprint by analyzing
+                functions
+                and presenting comparative results as graphs
+              </p>
+            </header>
+            <div class="main-card-1">
+              <form action="{{ url_for('ecopy') }}" method="POST">
+                <input class="main-btn-1" type="submit" value="Use Tool">
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 no-gutters">
+        <div class="rightside d-flex align-items-center justify-content-center">
+          <div class="main-card">
+            <header class="main-header">
+              <h2 >EcoDB</h2>
+              <p>
+               Enter mysql and mongodb queries for analysis, ecoDB performs a comparative analysis of energy consumption and carbon emissions for the same query in both the databases
+              </p>
+            </header>
+            <div class="main-card-1">
+              <form action="{{ url_for('ecodb') }}" method="POST">
+                <input class="main-btn-2" type="submit" value="Use Tool">
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html>
+  <head>
+    <title>Two Column Layout</title>
+    <style>
+      .column {
+        float: left;
+        width: 50%;
+        padding: 10px;
+      }
+      .clearfix {
+        clear: both;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="column">
+      <h2>Column 1</h2>
+      <p>This is the description for column 1.</p>
+      <form action="{{ url_for('ecopy') }}" method="POST">
+        <input class="home-btn" type="submit" value="EcoPy">
+      </form>
+    </div>
+    <div class="column">
+      <h2>Column 2</h2>
+      <p>This is the description for column 2.</p>
+      <form action="{{ url_for('ecodb') }}" method="POST">
+        <input class="home-btn" type="submit" value="EcoDB">
+      </form>
+    </div>
+    <div class="clearfix"></div>
+  </body>
+</html> -->
