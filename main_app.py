@@ -13,6 +13,7 @@ import sys
 import matplotlib.pyplot as plt
 import io
 import base64
+import psycopg2
 sys.path.insert(0, "./")
 sys.path.insert(0, "./")
 
@@ -50,7 +51,12 @@ def compare():
     password = request.form['password']
     nosql_query = request.form['nosql_query']
     nosql_db_name = request.form['nosql_db_name']
+    postgresql_query = request.form['postgresql_query']
+    postgresql_db_name = request.form['postgresql_db_name']
+    postgresql_password = request.form['postgresql_password']
     sql_res = execute_sql_query(sql_query, 'root', password, sql_db_name)
+    time.sleep(1)
+    postgresql_res = execute_postgreSQL_query(postgresql_query,'postgres',postgresql_password,postgresql_db_name)
     time.sleep(1)
     nosql_res = execute_noSQL_query(nosql_query, nosql_db_name)
     eff_res = []
@@ -68,8 +74,8 @@ def compare():
     else:
         eff_res.append(sql_res[5])
     return render_template('compare_result.html', sql_cpu_consumption=sql_res[0], sql_ram_consumption=sql_res[1], sql_total_consumption=sql_res[2], sql_co2_emissions=sql_res[3], sql_miles_equvivalence=sql_res[4], sql_tv_equvivalence=sql_res[5],
-                           nosql_cpu_consumption=nosql_res[0], nosql_ram_consumption=nosql_res[1], nosql_total_consumption=nosql_res[
-                               2], nosql_co2_emissions=nosql_res[3], nosql_miles_equvivalence=nosql_res[4], nosql_tv_equvivalence=nosql_res[5],
+                           postgresql_cpu_consumption=postgresql_res[0], postgresql_ram_consumption=postgresql_res[1], postgresql_total_consumption=postgresql_res[2], postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[4], postgresql_tv_equvivalence=postgresql_res[5],
+                           nosql_cpu_consumption=nosql_res[0], nosql_ram_consumption=nosql_res[1], nosql_total_consumption=nosql_res[2], nosql_co2_emissions=nosql_res[3], nosql_miles_equvivalence=nosql_res[4], nosql_tv_equvivalence=nosql_res[5],
                            efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
 
 
@@ -221,6 +227,33 @@ def execute_sql_query(query, db_user, db_password, db_name):
     return res
 
 
+
+def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_password, postgresql_db_name):
+    obj = Tracker()
+    # Tracker object starts to calculate the cpu,ram consumptions
+    obj.start()
+    res = []
+    connection = psycopg2.connect(host='localhost',database=postgresql_db_name,user=postgresql_user,password=postgresql_password)
+    cursor = connection.cursor()
+    cursor.execute(postgresql_query)
+    connection.commit()
+    cursor.close()
+    connection.close()
+    # Tracker object stops
+    obj.stop()
+
+    # store the cpu and ram consumptions,CO2 emissions
+    res.append("{:.2e}".format(obj.cpu_consumption()))
+    res.append("{:.2e}".format(obj.ram_consumption()))
+    res.append("{:.2e}".format(obj.consumption()))
+    CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
+    res.append("{:.2e}".format(float(CO2_emissions)))
+    res.append(carbon_to_miles(
+        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    res.append(carbon_to_tv(
+        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    return res
+
 '''
 @input : String - query , String : db_name
 @output: Array consists of query energy consumption by CPU,RAM and CO2 emissions
@@ -228,7 +261,6 @@ def execute_sql_query(query, db_user, db_password, db_name):
 
 done by Poojasree
 '''
-
 
 def execute_noSQL_query(query, db_name):
     client = MongoClient('mongodb://localhost:27017/')

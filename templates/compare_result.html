@@ -10,7 +10,7 @@
 <body>
 	<div class="compare-container container-xxl">
 		<div class="row no-gutters">
-			<div class="col-d-6 no-gutters">
+			<div class="col-d-4 no-gutters">
 				<div class="leftside d-flex align-items-center justify-content-center">
 					<header style="color: #00ced1;margin-left: 40%;margin-bottom: 2%;position: relative;padding-top: 2%;">
 						<h2>SQL Query</h2>
@@ -45,7 +45,42 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-d-6 no-gutters">
+			<div class="col-d-4 no-gutters">
+				<div class="leftside d-flex align-items-center justify-content-center">
+					<header style="color: #00ced1;margin-left: 40%;margin-bottom: 2%;position: relative;padding-top: 2%;">
+						<h2>PostgreSQL Query</h2>
+					</header>
+					<div class="result-card ">
+						<table class="rwd-table">
+							<thead>
+								<tr>
+									<th>Resource Consumption Metrics</th>
+									<th>Results</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>CPU Consumption</td>
+									<td>{{ postgresql_cpu_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>RAM Consumption</td>
+									<td>{{ postgresql_ram_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>Total Consumption</td>
+									<td>{{ postgresql_total_consumption }} kWh</td>
+								</tr>
+								<tr>
+									<td>CO2 Emissions</td>
+									<td>{{ postgresql_co2_emissions }} kg CO2</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="col-d-4 no-gutters">
 				<div class="rightside d-flex align-items-center justify-content-center">
 					<header style="color: #00ced1;margin-left: 30%;margin-bottom: 2%;position: relative;padding-top: 2%;">
 						<h2>Comparitive Analysis</h2>

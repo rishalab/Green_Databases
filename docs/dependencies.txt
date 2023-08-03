@@ -18,3 +18,4 @@ Names
     werkzeug
     mysql-connector-python
     pymongo
+    psycopg2
