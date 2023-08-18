@@ -32,5 +32,5 @@
 ![ecodb](https://user-images.githubusercontent.com/84029615/233855298-259bc677-0ec3-4d6d-9415-b41b25d54037.png)
 
 **Limitations**
- * Only support MySQL and MongoDB databases
- * Does not support more complex queries such as operations chaining 
+ * Only supports MySQL, PostgreSQL, MongoDB and Couchbase databases.
+ * Does not support more complex queries such as operations chaining. 
