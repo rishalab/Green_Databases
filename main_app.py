@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import psycopg2
+from couchbase.auth import PasswordAuthenticator
+from couchbase.cluster import Cluster
+from couchbase.options import ClusterOptions, QueryOptions
 sys.path.insert(0, "./")
 sys.path.insert(0, "./")
 
@@ -24,13 +27,6 @@ os.makedirs(os.path.join(app.instance_path, 'uploads'), exist_ok=True)
 
 @app.route("/")
 def index():
-    return render_template('ecodb.html')
-
-
-# ----------------- EcoDB routes and Definitions ---------------
-
-@app.route('/ecodb', methods=['POST'])
-def ecodb():
     return render_template('ecodb.html')
 
 
@@ -46,36 +42,56 @@ def execute_query():
 
 @app.route('/compare', methods=['POST'])
 def compare():
-    sql_query = request.form['sql_query']
-    sql_db_name = request.form['sql_db_name']
-    password = request.form['password']
-    nosql_query = request.form['nosql_query']
-    nosql_db_name = request.form['nosql_db_name']
+    mysql_query = request.form['mysql_query']
+    mysql_db_name = request.form['mysql_db_name']
+    mysql_password = request.form['mysql_password']
+    mongodb_query = request.form['mongodb_query']
+    mongodb_db_name = request.form['mongodb_db_name']
     postgresql_query = request.form['postgresql_query']
     postgresql_db_name = request.form['postgresql_db_name']
     postgresql_password = request.form['postgresql_password']
-    sql_res = execute_sql_query(sql_query, 'root', password, sql_db_name)
+    couchbase_query = request.form['couchbase_query']
+    couchbase_username = request.form['couchbase_username']
+    couchbase_password = request.form['couchbase_password']
+    couchbase_bucket_name = request.form['couchbase_bucket_name']
+
     time.sleep(1)
-    postgresql_res = execute_postgreSQL_query(postgresql_query,'postgres',postgresql_password,postgresql_db_name)
+    mysql_res = execute_mysql_query(
+        mysql_query, 'root', mysql_password, mysql_db_name)
     time.sleep(1)
-    nosql_res = execute_noSQL_query(nosql_query, nosql_db_name)
+    postgresql_res = execute_postgreSQL_query(
+        postgresql_query, 'postgres', postgresql_password, postgresql_db_name)
+    time.sleep(1)
+    mongodb_res = execute_mongodb_query(mongodb_query, mongodb_db_name)
+    time.sleep(1)
+    couchbase_res = execute_couchbase_query(
+        couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name)
+    time.sleep(1)
     eff_res = []
     for i in range(2, 4):
-        if sql_res[i] < nosql_res[i]:
+        if mysql_res[i] < mongodb_res[i]:
             eff_res.append("SQL")
         else:
             eff_res.append("NOSQL")
-    if sql_res[4] > nosql_res[4]:
-        eff_res.append(nosql_res[4])
+    if mysql_res[4] > mongodb_res[4]:
+        eff_res.append(mongodb_res[4])
     else:
-        eff_res.append(sql_res[4])
-    if sql_res[5] > nosql_res[5]:
-        eff_res.append(nosql_res[5])
+        eff_res.append(mysql_res[4])
+    if mysql_res[5] > mongodb_res[5]:
+        eff_res.append(mongodb_res[5])
     else:
-        eff_res.append(sql_res[5])
-    return render_template('compare_result.html', sql_cpu_consumption=sql_res[0], sql_ram_consumption=sql_res[1], sql_total_consumption=sql_res[2], sql_co2_emissions=sql_res[3], sql_miles_equvivalence=sql_res[4], sql_tv_equvivalence=sql_res[5],
-                           postgresql_cpu_consumption=postgresql_res[0], postgresql_ram_consumption=postgresql_res[1], postgresql_total_consumption=postgresql_res[2], postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[4], postgresql_tv_equvivalence=postgresql_res[5],
-                           nosql_cpu_consumption=nosql_res[0], nosql_ram_consumption=nosql_res[1], nosql_total_consumption=nosql_res[2], nosql_co2_emissions=nosql_res[3], nosql_miles_equvivalence=nosql_res[4], nosql_tv_equvivalence=nosql_res[5],
+        eff_res.append(mysql_res[5])
+    return render_template('compare_result.html', mysql_cpu_consumption=mysql_res[0], mysql_ram_consumption=mysql_res[1], mysql_total_consumption=mysql_res[2],
+                           mysql_co2_emissions=mysql_res[3], mysql_miles_equvivalence=mysql_res[
+                               4], mysql_tv_equvivalence=mysql_res[5],
+                           postgresql_cpu_consumption=postgresql_res[0], postgresql_ram_consumption=postgresql_res[
+                               1], postgresql_total_consumption=postgresql_res[2],
+                           postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[
+                               4], postgresql_tv_equvivalence=postgresql_res[5],
+                           mongodb_cpu_consumption=mongodb_res[0], mongodb_ram_consumption=mongodb_res[1], mongodb_total_consumption=mongodb_res[
+                               2], mongodb_co2_emissions=mongodb_res[3], nosql_miles_equvivalence=mongodb_res[4], nosql_tv_equvivalence=mongodb_res[5],
+                           couchbase_cpu_consumption=couchbase_res[0], couchbase_ram_consumption=couchbase_res[1], couchbase_total_consumption=couchbase_res[
+                               2], couchbase_co2_emissions=couchbase_res[3], couchbase_miles_equvivalence=couchbase_res[4], couchbase_tv_equvivalence=couchbase_res[5],
                            efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
 
 
@@ -194,7 +210,7 @@ done by Manasa and Namitha
 '''
 
 
-def execute_sql_query(query, db_user, db_password, db_name):
+def execute_mysql_query(query, db_user, db_password, db_name):
     obj = Tracker()
     # Tracker object starts to calculate the cpu,ram consumptions
     obj.start()
@@ -227,13 +243,13 @@ def execute_sql_query(query, db_user, db_password, db_name):
     return res
 
 
-
 def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_password, postgresql_db_name):
     obj = Tracker()
     # Tracker object starts to calculate the cpu,ram consumptions
     obj.start()
     res = []
-    connection = psycopg2.connect(host='localhost',database=postgresql_db_name,user=postgresql_user,password=postgresql_password)
+    connection = psycopg2.connect(
+        host='localhost', database=postgresql_db_name, user=postgresql_user, password=postgresql_password)
     cursor = connection.cursor()
     cursor.execute(postgresql_query)
     connection.commit()
@@ -254,6 +270,46 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
         obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
     return res
 
+
+def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name):
+    obj = Tracker()
+    # Tracker object starts to calculate the cpu,ram consumptions
+    obj.start()
+    res = []
+    # connection = psycopg2.connect(
+    #     host='localhost', database=postgresql_db_name, user=postgresql_user, password=postgresql_password)
+    auth = PasswordAuthenticator(couchbase_username, couchbase_password)
+    cluster = Cluster.connect('couchbase://localhost', ClusterOptions(auth))
+
+    # get a reference to our bucket
+    cb = cluster.bucket(couchbase_bucket_name)
+
+    # get a reference to the default collection
+    cb_coll = cb.default_collection()
+    query_res = cluster.query(couchbase_query)
+    for row in query_res:
+        print(f'Found row: {row}')
+    # cursor = connection.cursor()
+    # cursor.execute(postgresql_query)
+    # connection.commit()
+    # cursor.close()
+    # connection.close()
+    # Tracker object stops
+    obj.stop()
+
+    # store the cpu and ram consumptions,CO2 emissions
+    res.append("{:.2e}".format(obj.cpu_consumption()))
+    res.append("{:.2e}".format(obj.ram_consumption()))
+    res.append("{:.2e}".format(obj.consumption()))
+    CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
+    res.append("{:.2e}".format(float(CO2_emissions)))
+    res.append(carbon_to_miles(
+        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    res.append(carbon_to_tv(
+        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    return res
+
+
 '''
 @input : String - query , String : db_name
 @output: Array consists of query energy consumption by CPU,RAM and CO2 emissions
@@ -262,7 +318,8 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
 done by Poojasree
 '''
 
-def execute_noSQL_query(query, db_name):
+
+def execute_mongodb_query(query, db_name):
     client = MongoClient('mongodb://localhost:27017/')
     obj = Tracker()
     # Tracker object starts to calculate the cpu,ram consumptions
@@ -288,12 +345,12 @@ def execute_noSQL_query(query, db_name):
     if "insertOne" in query_field:
         print("inserting one document")
         query_doc = query_field.split('insertOne(')[1].split(')')[0]
-        split_quer_doc = query_doc.split(',')
-        arg_dict = []
-        for q in split_quer_doc:
-            arg_dict.append(eval(q))
-
-        result = collection.insert_one(*arg_dict)
+        # split_quer_doc = query_doc.split(',')
+        # arg_dict = []
+        # for q in split_quer_doc:
+        #     arg_dict.append(eval(q))
+        arg_dict = eval(query_doc)
+        result = collection.insert_one(arg_dict)
         print(result)
 
     if "insertMany" in query_field:

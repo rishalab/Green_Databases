@@ -19,3 +19,4 @@ Names
     mysql-connector-python
     pymongo
     psycopg2
+    couchbase

@@ -1,6 +1,7 @@
 import subprocess
 
-libraries = ['pandas','numpy','matplotlib', 'psutil', 'py-cpuinfo', 'tzlocal', 'geopy', 'geocoder', 'flask', 'werkzeug','pymongo','mysql-connector-python','psycopg2']
+libraries = ['pandas', 'numpy', 'matplotlib', 'psutil', 'py-cpuinfo', 'tzlocal', 'geopy',
+             'geocoder', 'flask', 'werkzeug', 'pymongo', 'mysql-connector-python', 'psycopg2', 'couchbase']
 
 for lib in libraries:
     subprocess.check_call(['pip', 'install', lib])
