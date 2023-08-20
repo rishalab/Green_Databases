@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,11 +8,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <title>EcoDB</title>
-    <link rel="stylesheet" href="../static/comparision.css">
+    <link rel="stylesheet" href="../static/input.css">
 </head>
+
 <body>
     <div class="container-xxl">
-        <form method="POST" action="{{ url_for('compare') }}">
+        <form method="POST" action="{{ url_for('table_creation') }}">
             <div class="row no-gutters">
                 <div class="col-md-6 no-gutters">
                     <div class="leftside d-flex align-items-center justify-content-center">
@@ -19,10 +21,10 @@
                             <div class="sql">
                                 <div class="comp-wrapper">
                                     <header style="color: #00ced1;">
-                                        <h4 class="headings">MySQL Query</h4>
+                                        <h4 class="headings">MySQL Username</h4>
                                     </header>
-                                    <textarea spellcheck="false" name="mysql_query" id="mysql_query" placeholder="Enter the Query"
-                                        rows="10" cols="50" autocomplete="off"></textarea>
+                                    <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text" name="mysql_username"
+                                        id="mysql_username" autocomplete="off">
                                 </div>
                                 <div class="comp-box">
                                     <header style="color: #00ced1;">
@@ -38,10 +40,10 @@
                                 </div>
                                 <div class="comp-wrapper">
                                     <header style="color: #00ced1;">
-                                        <h4 class="headings">PostgreSQL Query</h4>
+                                        <h4 class="headings">PostgreSQL Username</h4>
                                     </header>
-                                    <textarea spellcheck="false" name="postgresql_query" id="postgresql_query" placeholder="Enter the Query"
-                                        rows="10" cols="50" autocomplete="off"></textarea>
+                                    <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text" name="postgresql_username"
+                                        id="mysql_db_name" autocomplete="off">
                                 </div>
                                 <div class="comp-box">
                                     <header style="color: #00ced1;">
@@ -69,10 +71,9 @@
                             <div class="no-sql">
                                 <div class="comp-wrapper">
                                     <header>
-                                        <h4 class="headings">MongoDB Query</h4>
+                                        <h4 class="headings"></h4>
                                     </header>
-                                    <textarea spellcheck="false" name="mongodb_query" id="mongodb_query" placeholder="Enter the Query"
-                                        rows="10" cols="50" autocomplete="off"></textarea>
+                                    
                                 </div>
                                 <div class="comp-box">
                                     <header>
@@ -81,24 +82,17 @@
                                     <input placeholder="Database Name" class="comp-dbname" spellcheck="false"
                                         type="text" name="mongodb_db_name" id="mongodb_db_name" autocomplete="off">
                                 </div>
-                                <div class="comp-wrapper">
-                                    <header>
-                                        <h4 class="headings">Couchbase Query</h4>
-                                    </header>
-                                    <textarea spellcheck="false" name="couchbase_query" id="couchbase_query" placeholder="Enter the Query" rows="10"
-                                        cols="50" autocomplete="off"></textarea>
-                                </div>
                                 <div class="comp-box">
                                     <header>
                                         <h4 class="headings">Couchbase Username</h4>
                                     </header>
-                                    <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text" name="couchbase_username"
-                                        id="couchbase_username" autocomplete="off">
+                                    <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text"
+                                        name="couchbase_username" id="couchbase_username" autocomplete="off">
                                     <header>
                                         <h4 class="headings">Couchbase Password</h4>
                                     </header>
-                                    <input placeholder="Password" class="comp-dbname" spellcheck="false" type="password" name="couchbase_password"
-                                        id="couchbase_password" autocomplete="off">
+                                    <input placeholder="Password" class="comp-dbname" spellcheck="false" type="password"
+                                        name="couchbase_password" id="couchbase_password" autocomplete="off">
                                     <header>
                                 </div>
                             </div>
@@ -120,4 +114,5 @@
     </div>
 
 </body>
+
 </html>

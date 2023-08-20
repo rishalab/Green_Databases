@@ -1,11 +1,12 @@
 import time
+import csv
 import mysql.connector
 from pymongo import MongoClient
 import re
 # Tracker where all metric calculation functions are implemented
 from Tracker.main import Tracker
 import os
-from flask import Flask, render_template, request, Blueprint
+from flask import Flask, render_template, request, Blueprint, session
 from werkzeug.utils import secure_filename
 import glob
 import fileinput
@@ -14,15 +15,21 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import psycopg2
+import uuid
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions, QueryOptions
+from couchbase.management.buckets import BucketSettings, CreateBucketSettings
+from couchbase.exceptions import BucketNotFoundException
+from datetime import datetime
+
 sys.path.insert(0, "./")
 sys.path.insert(0, "./")
 
 
 app = Flask(__name__)
-os.makedirs(os.path.join(app.instance_path, 'uploads'), exist_ok=True)
+app.secret_key = 'secret'
+# os.makedirs(os.path.join(app.instance_path, 'uploads'), exist_ok=True)
 
 
 @app.route("/")
@@ -30,9 +37,350 @@ def index():
     return render_template('ecodb.html')
 
 
+@app.route("/upload_file", methods=['GET', 'POST'])
+def upload_file():
+    return render_template('upload.html')
+
+
+def allowed_file(filename):
+    print(filename.rsplit('.', 1)[1].lower())
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'csv'
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    if request.method == 'POST':
+        f = request.files
+        print(f'this {f}')
+        f = request.files['file']
+        filename = f.filename
+        session['filename'] = filename
+        filename1 = filename.split(".")
+        table_name = filename1[0].replace(" ", "_")
+        session['table_name'] = table_name
+        # if no file is found then display the error please upload a file
+        if f.filename == '':
+            not_uploaded = 'Please select a file to upload.'
+            return render_template('upload.html', not_uploaded=not_uploaded)
+        # if file is in correct format then upload it to the uploaded folder
+
+        if f and allowed_file(f.filename):
+            upload_folder = 'uploads'
+            empty_folder(upload_folder)
+            fp = os.path.join('uploads', f.filename)
+            f.save(fp)
+
+            # Check if the file exists before opening it
+            if os.path.isfile(fp):
+                # Read the first row of the CSV file and print it
+                with open(fp, 'r') as csv_file:
+                    csv_reader = csv.reader(csv_file)
+                    data = list(csv_reader)
+                    column_names = data[0]
+                    column_names = [replace_spaces_with_underscore(
+                        item) for item in column_names]
+                    session['column_names'] = column_names
+                    new_data = data[1:]
+                    new_fp = os.path.join('uploads', "new_"+f.filename)
+                    with open(new_fp, 'w', newline='') as new_csv_file:
+                        csv_writer = csv.writer(new_csv_file)
+                        csv_writer.writerows(new_data)
+                os.remove(fp)
+                os.rename(new_fp, fp)
+                return render_template('column_names.html', items=column_names)
+            else:
+                return "File not found."
+
+
+def empty_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                os.rmdir(file_path)
+        except Exception as e:
+            print(f"Failed to delete {file_path}: {e}")
+
+
+@app.route('/table_creation', methods=['POST'])
+def table_creation():
+    # return render_template('comparision.html')
+    mysql_username = request.form['mysql_username']
+    mysql_db_name = request.form['mysql_db_name']
+    mysql_password = request.form['mysql_password']
+    mongodb_db_name = request.form['mongodb_db_name']
+    postgresql_username = request.form['postgresql_username']
+    postgresql_db_name = request.form['postgresql_db_name']
+    postgresql_password = request.form['postgresql_password']
+    couchbase_username = request.form['couchbase_username']
+    couchbase_password = request.form['couchbase_password']
+
+    session['mysql_username'] = mysql_username
+    session['mysql_db_name'] = mysql_db_name
+    session['mysql_password'] = mysql_password
+    session['mongodb_db_name'] = mongodb_db_name
+    session['postgresql_username'] = postgresql_username
+    session['postgresql_db_name'] = postgresql_db_name
+    session['postgresql_password'] = postgresql_password
+    session['couchbase_username'] = couchbase_username
+    session['couchbase_password'] = couchbase_password
+
+    create_mysql_table(mysql_username, mysql_password, mysql_db_name)
+    create_mongodb_collection(mongodb_db_name)
+    create_postgresql_table(postgresql_username,
+                            postgresql_password, postgresql_db_name)
+    # create_couchbase_collection(
+    #     couchbase_username, couchbase_password)
+    return "successfull!"
+
+
+@app.route('/submit_columns', methods=['POST'])
+def submit_columns():
+    column_names = session.get('column_names', None)
+    column_types = [request.form.get(item) for item in column_names]
+    primary_key = request.form.get('primary_key')
+    primary_key = primary_key.replace(" ", "_")
+    session['primary_key'] = primary_key
+    session['column_types'] = column_types
+    return render_template('input.html')
+
+
+def replace_spaces_with_underscore(item):
+    return item.replace(" ", "_")
+
+
+def create_mysql_table(user, password, database):
+    conn = mysql.connector.connect(
+        host="localhost", user=user, passwd=password, database=database)
+    cur = conn.cursor()
+    column_names = session.get('column_names', None)
+    column_types = session.get('column_types', None)
+    filename = session.get('filename', None)
+    table_name = session.get('table_name', None)
+    primary_key = session.get('primary_key', None)
+
+    columns = [(x, y) for x, y in zip(column_names, column_types)]
+    date_columns = []
+    for column_name, column_type in columns:
+        if column_type == 'date':
+            date_columns.append(column_name)
+
+    drop_query = f'DROP TABLE IF EXISTS {table_name};'
+    create_query = f'CREATE TABLE {table_name} ('
+    for column_name, column_type in columns:
+        create_query += f'{column_name} {column_type}, '
+    # Remove the trailing comma and space
+    create_query = create_query[:-2]
+
+    if primary_key:
+        create_query += f', PRIMARY KEY ({primary_key})'
+
+    create_query += ');'
+    path = 'uploads\\' + filename
+    data = csv.reader(open(path))
+    insert_query = f'INSERT INTO {table_name} ('
+    for x in column_names:
+        insert_query += f'{x}, '
+    insert_query = insert_query[:-2]
+    insert_query += f') VALUES ('
+    placeholders = ', '.join(['%s'] * len(column_names))
+    insert_query += placeholders
+    insert_query += f')'
+
+    print(drop_query)
+    print(create_query)
+    print(insert_query)
+    cur.execute(drop_query)
+    cur.execute(create_query)
+    # for row in data:
+    #     cur.execute(insert_query, row)
+    #     # print(row)
+
+    for row in data:
+        # Parse and reformat date columns if necessary
+        for i, column_name in enumerate(column_names):
+            if column_name in date_columns:
+                try:
+                    # Assuming the date format is 'dd-mm-yyyy' in the CSV file
+                    date_str = row[i]
+                    date_obj = datetime.strptime(date_str, '%d-%m-%Y')
+                    formatted_date = date_obj.strftime('%Y-%m-%d')
+                    row[i] = formatted_date
+                except ValueError as e:
+                    # print(f"Error parsing date: {e}")
+                    pass
+        cur.execute(insert_query, row)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def create_postgresql_table(user, password, database):
+    conn = psycopg2.connect(
+        host="localhost", user=user, password=password, database=database)
+    cur = conn.cursor()
+    column_names = session.get('column_names', None)
+    column_types = session.get('column_types', None)
+    filename = session.get('filename', None)
+    table_name = session.get('table_name', None)
+    primary_key = session.get('primary_key', None)
+
+    columns = [(x, y) for x, y in zip(column_names, column_types)]
+    date_columns = []
+    for column_name, column_type in columns:
+        if column_type == 'date':
+            date_columns.append(column_name)
+
+    drop_query = f'DROP TABLE IF EXISTS {table_name};'
+    create_query = f'CREATE TABLE {table_name} ('
+    for column_name, column_type in columns:
+        if column_name == primary_key:
+            create_query += f'{column_name} {column_type} PRIMARY KEY, '
+        else:
+            create_query += f'{column_name} {column_type}, '
+    # Remove the trailing comma and space
+    create_query = create_query[:-2]
+
+    create_query += ');'
+    path = 'uploads\\' + filename
+    data = csv.reader(open(path))
+    insert_query = f'INSERT INTO {table_name} ('
+    for x in column_names:
+        insert_query += f'{x}, '
+    insert_query = insert_query[:-2]
+    insert_query += f') VALUES ('
+    placeholders = ', '.join(['%s'] * len(column_names))
+    insert_query += placeholders
+    insert_query += f')'
+
+    print(drop_query)
+    print(create_query)
+    print(insert_query)
+    cur.execute(drop_query)
+    cur.execute(create_query)
+    for row in data:
+        cur.execute(insert_query, row)
+        # print(row)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def create_mongodb_collection(db_name):
+    client = MongoClient('mongodb://localhost:27017/')
+
+    collection_name = session.get('table_name', None)
+    column_names = session.get('column_names', None)
+    column_types = session.get('column_types', None)
+    columns = [(x, y) for x, y in zip(column_names, column_types)]
+    filename = session.get('filename', None)
+
+    db = client[db_name]
+
+    if collection_name in db.list_collection_names():
+        db.drop_collection(collection_name)
+
+    collection = db[collection_name]
+
+    path = 'uploads/' + filename
+    with open(path, 'r') as file:
+        reader = csv.DictReader(file, fieldnames=column_names)
+        for row in reader:
+            # Convert column values to the specified types before inserting
+            converted_row = {}
+            for col_name, col_type in zip(column_names, column_types):
+                value = row[col_name]
+                if col_type == 'int':
+                    converted_row[col_name] = int(row[col_name])
+                elif col_type == 'float':
+                    converted_row[col_name] = float(row[col_name])
+                elif col_type == 'bool':
+                    converted_row[col_name] = row[col_name].lower() == 'true'
+                elif col_type == 'date':
+                    converted_row[col_name] = datetime.strptime(
+                        value, '%d-%m-%y')
+                else:
+                    converted_row[col_name] = row[col_name]
+
+            # Insert the converted row into the collection
+            collection.insert_one(converted_row)
+
+
+# def create_couchbase_collection(user, password):
+#     cluster = Cluster('couchbase://localhost',
+#                       ClusterOptions(PasswordAuthenticator(user, password)))
+
+#     # Get the column names, types, and primary key from the session
+#     column_names = session.get('column_names', None)
+#     column_types = session.get('column_types', None)
+#     filename = session.get('filename', None)
+#     bucket_name = session.get('table_name', None)
+#     primary_key = session.get('primary_key', None)
+
+#     try:
+#         # Check if the bucket already exists
+#         existing_buckets = cluster.buckets().get_all_buckets()
+
+#         if bucket_name in [bucket.name for bucket in existing_buckets]:
+#             # If it exists, delete it
+#             cluster.buckets().drop_bucket(bucket_name)
+#     except BucketNotFoundException:
+#         pass
+
+#     # Create a new bucket with the same name
+#     settings = CreateBucketSettings(
+#         name=bucket_name, bucket_type='couchbase', ram_quota_mb=1000)
+#     cluster.buckets().create_bucket(settings)
+
+#     bucket = cluster.bucket(bucket_name)
+#     collection = bucket.default_collection()
+
+#     path = 'uploads/' + filename
+#     for column_type in column_types:
+#         if column_type == 'text':
+#             column_type = 'string'
+
+#     try:
+#         with open(path, 'r') as csv_file:
+#             data = csv.reader(csv_file)
+#             for row in data:
+#                 # Create a dictionary to store the document fields
+#                 doc = {}
+#                 # Loop through the column names and types and assign the values from the row
+#                 for i, (name, type) in enumerate(zip(column_names, column_types)):
+#                     # Convert the value to the appropriate type
+#                     if type == 'int':
+#                         value = int(row[i])
+#                     elif type == 'float':
+#                         value = float(row[i])
+#                     elif type == 'date':
+#                         value = datetime.strptime(row[i], '%d-%m-%Y').date()
+#                     else:
+#                         value = row[i]
+#                     doc[name] = value
+
+#                 # Insert the document into Couchbase
+#                 collection.insert(doc)
+#     except Exception as e:
+#         print(f"Error inserting data: {str(e)}")
+
+
 @app.route('/comparision')
 def comparision():
     return render_template('comparision.html')
+
+
+@app.route('/choice')
+def choice():
+    return render_template('choice.html')
+
+# def ex():
+#     couchbase_bucket_name = session.get('couchbase_bucket_name', None)
+#     print(couchbase_bucket_name)
 
 
 @app.route('/execute_query')
@@ -276,8 +624,6 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
     # Tracker object starts to calculate the cpu,ram consumptions
     obj.start()
     res = []
-    # connection = psycopg2.connect(
-    #     host='localhost', database=postgresql_db_name, user=postgresql_user, password=postgresql_password)
     auth = PasswordAuthenticator(couchbase_username, couchbase_password)
     cluster = Cluster.connect('couchbase://localhost', ClusterOptions(auth))
 
@@ -289,11 +635,6 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
     query_res = cluster.query(couchbase_query)
     for row in query_res:
         print(f'Found row: {row}')
-    # cursor = connection.cursor()
-    # cursor.execute(postgresql_query)
-    # connection.commit()
-    # cursor.close()
-    # connection.close()
     # Tracker object stops
     obj.stop()
 
