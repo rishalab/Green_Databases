@@ -21,6 +21,7 @@ from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions, QueryOptions
 from couchbase.management.buckets import BucketSettings, CreateBucketSettings
 from couchbase.exceptions import BucketNotFoundException
+#from couchbase.cluster import BucketType
 from datetime import datetime
 
 sys.path.insert(0, "./")
@@ -131,8 +132,8 @@ def table_creation():
     create_mongodb_collection(mongodb_db_name)
     create_postgresql_table(postgresql_username,
                             postgresql_password, postgresql_db_name)
-    # create_couchbase_collection(
-    #     couchbase_username, couchbase_password)
+    create_couchbase_collection(
+        couchbase_username, couchbase_password)
     return "successfull!"
 
 
@@ -194,24 +195,24 @@ def create_mysql_table(user, password, database):
     print(insert_query)
     cur.execute(drop_query)
     cur.execute(create_query)
-    # for row in data:
-    #     cur.execute(insert_query, row)
-    #     # print(row)
-
     for row in data:
-        # Parse and reformat date columns if necessary
-        for i, column_name in enumerate(column_names):
-            if column_name in date_columns:
-                try:
-                    # Assuming the date format is 'dd-mm-yyyy' in the CSV file
-                    date_str = row[i]
-                    date_obj = datetime.strptime(date_str, '%d-%m-%Y')
-                    formatted_date = date_obj.strftime('%Y-%m-%d')
-                    row[i] = formatted_date
-                except ValueError as e:
-                    # print(f"Error parsing date: {e}")
-                    pass
         cur.execute(insert_query, row)
+        # print(row)
+
+    # for row in data:
+    #     # Parse and reformat date columns if necessary
+    #     for i, column_name in enumerate(column_names):
+    #         if column_name in date_columns:
+    #             try:
+    #                 # Assuming the date format is 'dd-mm-yyyy' in the CSV file
+    #                 date_str = row[i]
+    #                 date_obj = datetime.strptime(date_str, '%d-%m-%Y')
+    #                 formatted_date = date_obj.strftime('%Y-%m-%d')
+    #                 row[i] = formatted_date
+    #             except ValueError as e:
+    #                 # print(f"Error parsing date: {e}")
+    #                 pass
+    #     cur.execute(insert_query, row)
 
     conn.commit()
     cur.close()
@@ -310,63 +311,62 @@ def create_mongodb_collection(db_name):
             collection.insert_one(converted_row)
 
 
-# def create_couchbase_collection(user, password):
-#     cluster = Cluster('couchbase://localhost',
-#                       ClusterOptions(PasswordAuthenticator(user, password)))
+def create_couchbase_collection(user, password):
+    try:
+        cluster = Cluster('couchbase://localhost',
+                          ClusterOptions(PasswordAuthenticator(user, password)))
 
-#     # Get the column names, types, and primary key from the session
-#     column_names = session.get('column_names', None)
-#     column_types = session.get('column_types', None)
-#     filename = session.get('filename', None)
-#     bucket_name = session.get('table_name', None)
-#     primary_key = session.get('primary_key', None)
+        # Get the column names, types, and primary key from the session
+        column_names = session.get('column_names', None)
+        column_types = session.get('column_types', None)
+        filename = session.get('filename', None)
+        bucket_name = session.get('table_name', None)
+        primary_key = session.get('primary_key', None)
 
-#     try:
-#         # Check if the bucket already exists
-#         existing_buckets = cluster.buckets().get_all_buckets()
+        existing_buckets = cluster.buckets().get_all_buckets()
 
-#         if bucket_name in [bucket.name for bucket in existing_buckets]:
-#             # If it exists, delete it
-#             cluster.buckets().drop_bucket(bucket_name)
-#     except BucketNotFoundException:
-#         pass
+        if bucket_name in [bucket.name for bucket in existing_buckets]:
+            # If it exists, delete it
+            cluster.buckets().drop_bucket(bucket_name)
 
-#     # Create a new bucket with the same name
-#     settings = CreateBucketSettings(
-#         name=bucket_name, bucket_type='couchbase', ram_quota_mb=1000)
-#     cluster.buckets().create_bucket(settings)
+        # Create a new bucket with the same name
+        settings = CreateBucketSettings(
+            name=bucket_name,
+            bucket_type='couchbase',
+            ram_quota_mb=100,
+            num_replicas=1
+        )
+        cluster.buckets().create_bucket(settings)
 
-#     bucket = cluster.bucket(bucket_name)
-#     collection = bucket.default_collection()
+        bucket = cluster.bucket(bucket_name)
+        collection = bucket.default_collection()
 
-#     path = 'uploads/' + filename
-#     for column_type in column_types:
-#         if column_type == 'text':
-#             column_type = 'string'
+        path = 'uploads/' + filename
 
-#     try:
-#         with open(path, 'r') as csv_file:
-#             data = csv.reader(csv_file)
-#             for row in data:
-#                 # Create a dictionary to store the document fields
-#                 doc = {}
-#                 # Loop through the column names and types and assign the values from the row
-#                 for i, (name, type) in enumerate(zip(column_names, column_types)):
-#                     # Convert the value to the appropriate type
-#                     if type == 'int':
-#                         value = int(row[i])
-#                     elif type == 'float':
-#                         value = float(row[i])
-#                     elif type == 'date':
-#                         value = datetime.strptime(row[i], '%d-%m-%Y').date()
-#                     else:
-#                         value = row[i]
-#                     doc[name] = value
+        with open(path, 'r') as csv_file:
+            data = csv.reader(csv_file)
+            for row in data:
+                # Create a dictionary to store the document fields
+                doc = {}
+                # Loop through the column names and types and assign the values from the row
+                for i, (name, type) in enumerate(zip(column_names, column_types)):
+                    # Convert the value to the appropriate type
+                    if type == 'int':
+                        value = int(row[i])
+                    elif type == 'float':
+                        value = float(row[i])
+                    elif type == 'date':
+                        value = datetime.strptime(row[i], '%d-%m-%Y').date()
+                    else:
+                        value = row[i]
+                    doc[name] = value
 
-#                 # Insert the document into Couchbase
-#                 collection.insert(doc)
-#     except Exception as e:
-#         print(f"Error inserting data: {str(e)}")
+                # Insert the document into Couchbase using a unique document ID
+                document_id = str(doc[primary_key])  # Assuming primary_key is the ID field
+                collection.upsert(document_id, doc)
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
 
 @app.route('/comparision')
@@ -416,19 +416,46 @@ def compare():
         couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name)
     time.sleep(1)
     eff_res = []
-    for i in range(2, 4):
-        if mysql_res[i] < mongodb_res[i]:
-            eff_res.append("SQL")
-        else:
-            eff_res.append("NOSQL")
-    if mysql_res[4] > mongodb_res[4]:
-        eff_res.append(mongodb_res[4])
-    else:
-        eff_res.append(mysql_res[4])
-    if mysql_res[5] > mongodb_res[5]:
-        eff_res.append(mongodb_res[5])
-    else:
-        eff_res.append(mysql_res[5])
+    databases = []
+    databases.append("MySQl")
+    databases.append("PostgreSQl")
+    databases.append("Mongodb")
+    databases.append("Couchbase")
+    eff_total_consumption = []
+    eff_total_consumption.append(mysql_res[2])
+    eff_total_consumption.append(postgresql_res[2])
+    eff_total_consumption.append(mongodb_res[2])
+    eff_total_consumption.append(couchbase_res[2])
+    
+    eff_co2_emissions = []
+    eff_co2_emissions.append(mysql_res[3])
+    eff_co2_emissions.append(postgresql_res[3])
+    eff_co2_emissions.append(mongodb_res[3])
+    eff_co2_emissions.append(couchbase_res[3])
+    eff_total_consumption.sort()
+    eff_co2_emissions.sort()
+    
+    databases_total_dict = {index: name for index, name in zip(eff_total_consumption, databases)}
+    databases_co2_dict = {index: name for index, name in zip(eff_co2_emissions, databases)}
+    
+    sorted_total = [databases_total_dict[i] for i in sorted(databases_total_dict)]
+    sorted_co2 = [databases_co2_dict[j] for j in sorted(databases_co2_dict)]
+    eff_res.append(sorted_total[0])
+    eff_res.append(sorted_co2[0])
+    miles = []
+    miles.append(mysql_res[4])
+    miles.append(postgresql_res[4])
+    miles.append(mongodb_res[4])
+    miles.append(couchbase_res[4])
+    tv = []
+    tv.append(mysql_res[5])
+    tv.append(postgresql_res[5])
+    tv.append(mongodb_res[5])
+    tv.append(couchbase_res[5])
+    miles.sort()
+    tv.sort()
+    eff_res.append(miles[0])
+    eff_res.append(tv[0])
     return render_template('compare_result.html', mysql_cpu_consumption=mysql_res[0], mysql_ram_consumption=mysql_res[1], mysql_total_consumption=mysql_res[2],
                            mysql_co2_emissions=mysql_res[3], mysql_miles_equvivalence=mysql_res[
                                4], mysql_tv_equvivalence=mysql_res[5],
@@ -467,10 +494,10 @@ def display1():
     if lang == "SQL":
         password = request.form['password']
         db_name = request.form['db_name']
-        res = execute_sql_query(query, 'root', password, db_name)
+        res = execute_mysql_query(query, 'root', password, db_name)
     else:
         db_name = request.form['db_name']
-        res = execute_noSQL_query(query, db_name)
+        res = execute_mongodb_query(query, db_name)
 
     return render_template('ecodb_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2], co2_emissions=res[3], mile_eqivalents=res[4], tv_minutes=res[5])
 
@@ -573,7 +600,7 @@ def execute_mysql_query(query, db_user, db_password, db_name):
         connection.close()
     else:
         result_set = cursor.fetchall()
-        print(result_set)
+        #print(result_set)
         connection.close()
     # Tracker object stops
     obj.stop()
@@ -633,8 +660,8 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
     # get a reference to the default collection
     cb_coll = cb.default_collection()
     query_res = cluster.query(couchbase_query)
-    for row in query_res:
-        print(f'Found row: {row}')
+    # for row in query_res:
+    #     print(f'Found row: {row}')
     # Tracker object stops
     obj.stop()
 
