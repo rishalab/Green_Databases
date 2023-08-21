@@ -16,13 +16,16 @@ import io
 import base64
 import psycopg2
 import uuid
+import couchbase
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions, QueryOptions
 from couchbase.management.buckets import BucketSettings, CreateBucketSettings
 from couchbase.exceptions import BucketNotFoundException
+from couchbase.n1ql import N1QLQuery
 #from couchbase.cluster import BucketType
 from datetime import datetime
+from decimal import Decimal
 
 sys.path.insert(0, "./")
 sys.path.insert(0, "./")
@@ -128,13 +131,16 @@ def table_creation():
     session['couchbase_username'] = couchbase_username
     session['couchbase_password'] = couchbase_password
 
-    create_mysql_table(mysql_username, mysql_password, mysql_db_name)
-    create_mongodb_collection(mongodb_db_name)
-    create_postgresql_table(postgresql_username,
-                            postgresql_password, postgresql_db_name)
-    create_couchbase_collection(
+    a = create_mysql_table(mysql_username, mysql_password, mysql_db_name)
+    b = create_mongodb_collection(mongodb_db_name)
+    c = create_postgresql_table(postgresql_username,
+                                postgresql_password, postgresql_db_name)
+    d = create_couchbase_collection(
         couchbase_username, couchbase_password)
-    return "successfull!"
+    if a == 'success' and b == 'success' and c == 'success' and d == 'success':
+        return render_template('enter_queries.html')
+    else:
+        return "Unsuccessfull!"
 
 
 @app.route('/submit_columns', methods=['POST'])
@@ -190,9 +196,9 @@ def create_mysql_table(user, password, database):
     insert_query += placeholders
     insert_query += f')'
 
-    print(drop_query)
-    print(create_query)
-    print(insert_query)
+    # print(drop_query)
+    # print(create_query)
+    # print(insert_query)
     cur.execute(drop_query)
     cur.execute(create_query)
     for row in data:
@@ -217,6 +223,8 @@ def create_mysql_table(user, password, database):
     conn.commit()
     cur.close()
     conn.close()
+    print('Table created and data inserted in MySQL.')
+    return "success"
 
 
 def create_postgresql_table(user, password, database):
@@ -257,9 +265,9 @@ def create_postgresql_table(user, password, database):
     insert_query += placeholders
     insert_query += f')'
 
-    print(drop_query)
-    print(create_query)
-    print(insert_query)
+    # print(drop_query)
+    # print(create_query)
+    # print(insert_query)
     cur.execute(drop_query)
     cur.execute(create_query)
     for row in data:
@@ -269,6 +277,8 @@ def create_postgresql_table(user, password, database):
     conn.commit()
     cur.close()
     conn.close()
+    print('Table created and data inserted in PostgreSQL.')
+    return "success"
 
 
 def create_mongodb_collection(db_name):
@@ -309,12 +319,16 @@ def create_mongodb_collection(db_name):
 
             # Insert the converted row into the collection
             collection.insert_one(converted_row)
+    print('Collection created and data inserted in MongoDB.')
+    return "success"
 
 
 def create_couchbase_collection(user, password):
     try:
         cluster = Cluster('couchbase://localhost',
                           ClusterOptions(PasswordAuthenticator(user, password)))
+        auth = PasswordAuthenticator(user, password)
+        conn = Cluster.connect('couchbase://localhost', ClusterOptions(auth))
 
         # Get the column names, types, and primary key from the session
         column_names = session.get('column_names', None)
@@ -338,12 +352,15 @@ def create_couchbase_collection(user, password):
         )
         cluster.buckets().create_bucket(settings)
 
+        time.sleep(2)
+
         bucket = cluster.bucket(bucket_name)
         collection = bucket.default_collection()
 
         path = 'uploads/' + filename
 
         with open(path, 'r') as csv_file:
+            # print(path)
             data = csv.reader(csv_file)
             for row in data:
                 # Create a dictionary to store the document fields
@@ -362,9 +379,19 @@ def create_couchbase_collection(user, password):
                     doc[name] = value
 
                 # Insert the document into Couchbase using a unique document ID
-                document_id = str(doc[primary_key])  # Assuming primary_key is the ID field
+                # Assuming primary_key is the ID field
+                document_id = str(doc[primary_key])
                 collection.upsert(document_id, doc)
+        time.sleep(2)
 
+        query = 'CREATE PRIMARY INDEX ON '
+        query += bucket_name
+        query += ' USING GSI;'
+
+        res = execute_couchbase_query(query, user, password, bucket_name)
+        print('The primary index is ready.')
+        print('Bucket created and data inserted in Couchbase.')
+        return "success"
     except Exception as e:
         print(f"Error: {str(e)}")
 
@@ -374,13 +401,102 @@ def comparision():
     return render_template('comparision.html')
 
 
+@app.route('/enter_queries', methods=['POST'])
+def enter_queries():
+    mysql_query = request.form['mysql_query']
+    mongodb_query = request.form['mongodb_query']
+    postgresql_query = request.form['postgresql_query']
+    couchbase_query = request.form['couchbase_query']
+
+    mysql_username = session.get('mysql_username', None)
+    mysql_db_name = session.get('mysql_db_name', None)
+    mysql_password = session.get('mysql_password', None)
+
+    mongodb_db_name = session.get('mongodb_db_name', None)
+
+    postgresql_username = session.get('postgresql_username', None)
+    postgresql_db_name = session.get('postgresql_db_name', None)
+    postgresql_password = session.get('postgresql_password', None)
+
+    couchbase_username = session.get('couchbase_username', None)
+    couchbase_password = session.get('couchbase_password', None)
+    couchbase_bucket_name = session.get('table_name', None)
+
+    time.sleep(1)
+    mysql_res = execute_mysql_query(
+        mysql_query, mysql_username, mysql_password, mysql_db_name)
+    time.sleep(1)
+    postgresql_res = execute_postgreSQL_query(
+        postgresql_query, postgresql_username, postgresql_password, postgresql_db_name)
+    time.sleep(1)
+    mongodb_res = execute_mongodb_query(mongodb_query, mongodb_db_name)
+    time.sleep(1)
+    couchbase_res = execute_couchbase_query(
+        couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name)
+    time.sleep(1)
+    eff_res = []
+    databases = []
+    databases.append("MySQl")
+    databases.append("PostgreSQl")
+    databases.append("Mongodb")
+    databases.append("Couchbase")
+    databases1 = []
+    databases1.append("MySQl")
+    databases1.append("PostgreSQl")
+    databases1.append("Mongodb")
+    databases1.append("Couchbase")
+    eff_total_consumption = []
+    eff_total_consumption.append(mysql_res[2])
+    eff_total_consumption.append(postgresql_res[2])
+    eff_total_consumption.append(mongodb_res[2])
+    eff_total_consumption.append(couchbase_res[2])
+
+    eff_co2_emissions = []
+    eff_co2_emissions.append(mysql_res[3])
+    eff_co2_emissions.append(postgresql_res[3])
+    eff_co2_emissions.append(mongodb_res[3])
+    eff_co2_emissions.append(couchbase_res[3])
+    databases_total_dict = {index: name for index,
+                            name in zip(eff_total_consumption, databases)}
+    databases_co2_dict = {index: name for index,
+                          name in zip(eff_co2_emissions, databases1)}
+    sorted_total = [databases_total_dict[i]
+                    for i in sorted(databases_total_dict, key=lambda x: Decimal(x))]
+    sorted_co2 = [databases_co2_dict[j]
+                  for j in sorted(databases_co2_dict, key=lambda x: Decimal(x))]
+    eff_res.append(sorted_total[0])
+    eff_res.append(sorted_co2[0])
+    miles = []
+    miles.append(mysql_res[4])
+    miles.append(postgresql_res[4])
+    miles.append(mongodb_res[4])
+    miles.append(couchbase_res[4])
+    tv = []
+    tv.append(mysql_res[5])
+    tv.append(postgresql_res[5])
+    tv.append(mongodb_res[5])
+    tv.append(couchbase_res[5])
+    miles.sort()
+    tv.sort()
+    eff_res.append(miles[0])
+    eff_res.append(tv[0])
+    return render_template('compare_result.html', mysql_cpu_consumption=mysql_res[0], mysql_ram_consumption=mysql_res[1], mysql_total_consumption=mysql_res[2],
+                           mysql_co2_emissions=mysql_res[3], mysql_miles_equvivalence=mysql_res[
+                               4], mysql_tv_equvivalence=mysql_res[5],
+                           postgresql_cpu_consumption=postgresql_res[0], postgresql_ram_consumption=postgresql_res[
+                               1], postgresql_total_consumption=postgresql_res[2],
+                           postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[
+                               4], postgresql_tv_equvivalence=postgresql_res[5],
+                           mongodb_cpu_consumption=mongodb_res[0], mongodb_ram_consumption=mongodb_res[1], mongodb_total_consumption=mongodb_res[
+                               2], mongodb_co2_emissions=mongodb_res[3], mongodb_miles_equvivalence=mongodb_res[4], mongodb_tv_equvivalence=mongodb_res[5],
+                           couchbase_cpu_consumption=couchbase_res[0], couchbase_ram_consumption=couchbase_res[1], couchbase_total_consumption=couchbase_res[
+                               2], couchbase_co2_emissions=couchbase_res[3], couchbase_miles_equvivalence=couchbase_res[4], couchbase_tv_equvivalence=couchbase_res[5],
+                           efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
+
+
 @app.route('/choice')
 def choice():
     return render_template('choice.html')
-
-# def ex():
-#     couchbase_bucket_name = session.get('couchbase_bucket_name', None)
-#     print(couchbase_bucket_name)
 
 
 @app.route('/execute_query')
@@ -421,25 +537,30 @@ def compare():
     databases.append("PostgreSQl")
     databases.append("Mongodb")
     databases.append("Couchbase")
+    databases1 = []
+    databases1.append("MySQl")
+    databases1.append("PostgreSQl")
+    databases1.append("Mongodb")
+    databases1.append("Couchbase")
     eff_total_consumption = []
     eff_total_consumption.append(mysql_res[2])
     eff_total_consumption.append(postgresql_res[2])
     eff_total_consumption.append(mongodb_res[2])
     eff_total_consumption.append(couchbase_res[2])
-    
+
     eff_co2_emissions = []
     eff_co2_emissions.append(mysql_res[3])
     eff_co2_emissions.append(postgresql_res[3])
     eff_co2_emissions.append(mongodb_res[3])
     eff_co2_emissions.append(couchbase_res[3])
-    eff_total_consumption.sort()
-    eff_co2_emissions.sort()
-    
-    databases_total_dict = {index: name for index, name in zip(eff_total_consumption, databases)}
-    databases_co2_dict = {index: name for index, name in zip(eff_co2_emissions, databases)}
-    
-    sorted_total = [databases_total_dict[i] for i in sorted(databases_total_dict)]
-    sorted_co2 = [databases_co2_dict[j] for j in sorted(databases_co2_dict)]
+    databases_total_dict = {index: name for index,
+                            name in zip(eff_total_consumption, databases)}
+    databases_co2_dict = {index: name for index,
+                          name in zip(eff_co2_emissions, databases1)}
+    sorted_total = [databases_total_dict[i]
+                    for i in sorted(databases_total_dict, key=lambda x: Decimal(x))]
+    sorted_co2 = [databases_co2_dict[j]
+                  for j in sorted(databases_co2_dict, key=lambda x: Decimal(x))]
     eff_res.append(sorted_total[0])
     eff_res.append(sorted_co2[0])
     miles = []
@@ -464,7 +585,7 @@ def compare():
                            postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[
                                4], postgresql_tv_equvivalence=postgresql_res[5],
                            mongodb_cpu_consumption=mongodb_res[0], mongodb_ram_consumption=mongodb_res[1], mongodb_total_consumption=mongodb_res[
-                               2], mongodb_co2_emissions=mongodb_res[3], nosql_miles_equvivalence=mongodb_res[4], nosql_tv_equvivalence=mongodb_res[5],
+                               2], mongodb_co2_emissions=mongodb_res[3], mongodb_miles_equvivalence=mongodb_res[4], mongodb_tv_equvivalence=mongodb_res[5],
                            couchbase_cpu_consumption=couchbase_res[0], couchbase_ram_consumption=couchbase_res[1], couchbase_total_consumption=couchbase_res[
                                2], couchbase_co2_emissions=couchbase_res[3], couchbase_miles_equvivalence=couchbase_res[4], couchbase_tv_equvivalence=couchbase_res[5],
                            efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
@@ -600,7 +721,7 @@ def execute_mysql_query(query, db_user, db_password, db_name):
         connection.close()
     else:
         result_set = cursor.fetchall()
-        #print(result_set)
+        # print(result_set)
         connection.close()
     # Tracker object stops
     obj.stop()
