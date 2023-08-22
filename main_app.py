@@ -40,18 +40,15 @@ app.secret_key = 'secret'
 def index():
     return render_template('ecodb.html')
 
+# functions and routes corresponding to uploading a csv file
+
 
 @app.route("/upload_file", methods=['GET', 'POST'])
 def upload_file():
     return render_template('upload.html')
 
 
-def allowed_file(filename):
-    print(filename.rsplit('.', 1)[1].lower())
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'csv'
-
-
-@app.route('/upload', methods=['POST'])
+@app.route('/column_types', methods=['POST'])
 def upload():
     if request.method == 'POST':
         f = request.files
@@ -60,7 +57,8 @@ def upload():
         filename = f.filename
         session['filename'] = filename
         filename1 = filename.split(".")
-        table_name = filename1[0].replace(" ", "_")
+        table = filename1[0].replace(" ", "_")
+        table_name = table.lower()
         session['table_name'] = table_name
         # if no file is found then display the error please upload a file
         if f.filename == '':
@@ -96,19 +94,7 @@ def upload():
                 return "File not found."
 
 
-def empty_folder(folder_path):
-    for filename in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, filename)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                os.rmdir(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}: {e}")
-
-
-@app.route('/table_creation', methods=['POST'])
+@app.route('/queries', methods=['POST'])
 def table_creation():
     # return render_template('comparision.html')
     mysql_username = request.form['mysql_username']
@@ -131,6 +117,8 @@ def table_creation():
     session['couchbase_username'] = couchbase_username
     session['couchbase_password'] = couchbase_password
 
+    table_name = session.get('table_name', None)
+
     a = create_mysql_table(mysql_username, mysql_password, mysql_db_name)
     b = create_mongodb_collection(mongodb_db_name)
     c = create_postgresql_table(postgresql_username,
@@ -138,20 +126,53 @@ def table_creation():
     d = create_couchbase_collection(
         couchbase_username, couchbase_password)
     if a == 'success' and b == 'success' and c == 'success' and d == 'success':
-        return render_template('enter_queries.html')
+        return render_template('enter_queries.html', table_name=table_name)
     else:
         return "Unsuccessfull!"
 
 
-@app.route('/submit_columns', methods=['POST'])
+@app.route('/primary_key', methods=['POST'])
 def submit_columns():
     column_names = session.get('column_names', None)
     column_types = [request.form.get(item) for item in column_names]
+    session['column_types'] = column_types
+    return render_template('primary_key.html', items=column_names)
+
+
+@app.route('/query-details', methods=['POST'])
+def prim_key():
+    column_names = session.get('column_names', None)
     primary_key = request.form.get('primary_key')
     primary_key = primary_key.replace(" ", "_")
     session['primary_key'] = primary_key
-    session['column_types'] = column_types
     return render_template('input.html')
+
+
+@app.route('/choice')
+def choice():
+    return render_template('choice.html')
+
+
+@app.route('/comparision')
+def comparision():
+    return render_template('comparision.html')
+
+
+def allowed_file(filename):
+    print(filename.rsplit('.', 1)[1].lower())
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'csv'
+
+
+def empty_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                os.rmdir(file_path)
+        except Exception as e:
+            print(f"Failed to delete {file_path}: {e}")
 
 
 def replace_spaces_with_underscore(item):
@@ -396,11 +417,6 @@ def create_couchbase_collection(user, password):
         print(f"Error: {str(e)}")
 
 
-@app.route('/comparision')
-def comparision():
-    return render_template('comparision.html')
-
-
 @app.route('/enter_queries', methods=['POST'])
 def enter_queries():
     mysql_query = request.form['mysql_query']
@@ -494,14 +510,11 @@ def enter_queries():
                            efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
 
 
-@app.route('/choice')
-def choice():
-    return render_template('choice.html')
-
-
-@app.route('/execute_query')
+@app.route('/query_results')
 def execute_query():
     return render_template('query_home.html')
+
+# functions and routes corresponding to using existing database
 
 
 @app.route('/compare', methods=['POST'])
