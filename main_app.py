@@ -334,7 +334,7 @@ def create_mongodb_collection(db_name):
                     converted_row[col_name] = row[col_name].lower() == 'true'
                 elif col_type == 'date':
                     converted_row[col_name] = datetime.strptime(
-                        value, '%d-%m-%y')
+                        value, '%Y-%m-%d')
                 else:
                     converted_row[col_name] = row[col_name]
 
@@ -394,7 +394,8 @@ def create_couchbase_collection(user, password):
                     elif type == 'float':
                         value = float(row[i])
                     elif type == 'date':
-                        value = datetime.strptime(row[i], '%d-%m-%Y').date()
+                        value = datetime.strptime(row[i], '%Y-%m-%d').date()
+                        value=value.isoformat()
                     else:
                         value = row[i]
                     doc[name] = value
@@ -794,8 +795,8 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
     # get a reference to the default collection
     cb_coll = cb.default_collection()
     query_res = cluster.query(couchbase_query)
-    # for row in query_res:
-    #     print(f'Found row: {row}')
+    for row in query_res:
+        print(f'Found row: {row}')
     # Tracker object stops
     obj.stop()
 

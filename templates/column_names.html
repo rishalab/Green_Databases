@@ -44,7 +44,13 @@
                                     <ul>
                                         {% for item in items %}
                                         <li>
-                                            <input type="text" name="{{ item }}" autocomplete="off">
+                                            <select name="{{item}}" autocomplete="off">
+                                                <option value="int">int</option>
+                                                <option value="float">float</option>
+                                                <option value="bool">bool</option>
+                                                <option value="text">text</option>
+                                                <option value="date">date</option>
+                                            </select>
                                         </li>
                                         {% endfor %}
                                 </header>
