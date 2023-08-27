@@ -9,67 +9,48 @@
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <title>EcoDB</title>
     <link rel="stylesheet" href="../static/column_names.css">
+    <style>
+        /* Custom styling */
+        .label-container {
+            margin-left: 15%;
+            margin-right: 15%;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="container-xxl">
+    <div class="container">
         <form method="POST" action="{{ url_for('submit_columns') }}">
-        <div class="row no-gutters">
-            <div class="col-md-6 no-gutters">
-                <div class="leftside d-flex align-items-center justify-content-center">
-                    <div class="comp-card">
-                        <div class="sql">
-                            <div class="comp-wrapper">
-                                <header style="color: #00ced1;">
-                                    <ul>
-                                        {% for item in items %}
-                                        <li>
-                                            {{ item }}:
-                                        </li>
-                                        {% endfor %}
-                                </header>
-                                
+                {% for item in items %}
+                <div class="col-12">
+                    <div class="label-container">
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label class="labelname">{{ item }}:</label>
                             </div>
-        
-                        </div>
-                    </div>
-                </div>
-            </div>
-        
-            <div class="col-md-6 no-gutters">
-                <div class="rightside d-flex align-items-center justify-content-center">
-                    <div class="comp-card">
-                        <div class="no-sql">
-                            <div class="comp-wrapper">
-                                <header>
-                                    <ul>
-                                        {% for item in items %}
-                                        <li>
-                                            <select name="{{item}}" autocomplete="off">
-                                                <option value="int">int</option>
-                                                <option value="float">float</option>
-                                                <option value="bool">bool</option>
-                                                <option value="text">text</option>
-                                                <option value="date">date</option>
-                                            </select>
-                                        </li>
-                                        {% endfor %}
-                                </header>
+                            <div class="form-group col">
+                                <select class="form-control" name="{{item}}" autocomplete="off">
+                                    <option value="int">int</option>
+                                    <option value="float">float</option>
+                                    <option value="bool">bool</option>
+                                    <option value="text">text</option>
+                                    <option value="date">date</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-4">
-            
-        </div>
-        <div class="col-3">
-            
-            <input class="btn  btn-block result-btn" type="submit" value="Submit">
-        </div>
-        <div class="col-4"></div>
-        
-    </form>
+                {% endfor %}
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <div class="result-btn-container text-center">
+                            <input class="btn result-btn" type="submit" value="Submit">
+                        </div>
+                    </div>
+                </div>
+        </form>
+
+    </div>
 </body>
 
 </html>
