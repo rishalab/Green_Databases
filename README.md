@@ -25,8 +25,9 @@
 
 **Instructions To Run:**  
 1) Clone repo   
-2) Run "setup.py" file to install necessary dependencies. 
-3) Command to start the tool - python main_app.py  
+2) Run "setup.py" file to install necessary dependencies.
+3) Run "stop_background_processes.py" file to stop all the currently running background processes.
+4) Command to start the tool - python main_app.py  
 
 # Tool Demo:
 ![ecodb](https://user-images.githubusercontent.com/84029615/233855298-259bc677-0ec3-4d6d-9415-b41b25d54037.png)
