@@ -6,6 +6,7 @@ import re
 # Tracker where all metric calculation functions are implemented
 from Tracker.main import Tracker
 import os
+import json
 from flask import Flask, render_template, request, Blueprint, session
 from werkzeug.utils import secure_filename
 import glob
@@ -75,6 +76,7 @@ def upload():
             # Check if the file exists before opening it
             if os.path.isfile(fp):
                 # Read the first row of the CSV file and print it
+                data=[]
                 with open(fp, 'r') as csv_file:
                     csv_reader = csv.reader(csv_file)
                     data = list(csv_reader)
@@ -89,6 +91,7 @@ def upload():
                         csv_writer.writerows(new_data)
                 os.remove(fp)
                 os.rename(new_fp, fp)
+                log_file(f.filename,data)
                 return render_template('column_names.html', items=column_names)
             else:
                 return "File not found."
@@ -178,6 +181,13 @@ def empty_folder(folder_path):
 def replace_spaces_with_underscore(item):
     return item.replace(" ", "_")
 
+
+def log_file(file_name, data):
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    log_file_name = f"{timestamp}_{file_name}.json"
+    log_file_path = os.path.join("logfiles", log_file_name)
+    with open(log_file_path, "w") as f:
+        json.dump(data, f, indent=4)
 
 def create_mysql_table(user, password, database):
     conn = mysql.connector.connect(
