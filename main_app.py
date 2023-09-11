@@ -76,7 +76,7 @@ def upload():
             # Check if the file exists before opening it
             if os.path.isfile(fp):
                 # Read the first row of the CSV file and print it
-                data=[]
+                data = []
                 with open(fp, 'r') as csv_file:
                     csv_reader = csv.reader(csv_file)
                     data = list(csv_reader)
@@ -91,7 +91,7 @@ def upload():
                         csv_writer.writerows(new_data)
                 os.remove(fp)
                 os.rename(new_fp, fp)
-                log_file(f.filename,data)
+                log_file(f.filename, data)
                 return render_template('column_names.html', items=column_names)
             else:
                 return "File not found."
@@ -189,6 +189,7 @@ def log_file(file_name, data):
     with open(log_file_path, "w") as f:
         json.dump(data, f, indent=4)
 
+
 def create_mysql_table(user, password, database):
     conn = mysql.connector.connect(
         host="localhost", user=user, passwd=password, database=database)
@@ -236,21 +237,6 @@ def create_mysql_table(user, password, database):
         cur.execute(insert_query, row)
         # print(row)
 
-    # for row in data:
-    #     # Parse and reformat date columns if necessary
-    #     for i, column_name in enumerate(column_names):
-    #         if column_name in date_columns:
-    #             try:
-    #                 # Assuming the date format is 'dd-mm-yyyy' in the CSV file
-    #                 date_str = row[i]
-    #                 date_obj = datetime.strptime(date_str, '%d-%m-%Y')
-    #                 formatted_date = date_obj.strftime('%Y-%m-%d')
-    #                 row[i] = formatted_date
-    #             except ValueError as e:
-    #                 # print(f"Error parsing date: {e}")
-    #                 pass
-    #     cur.execute(insert_query, row)
-
     conn.commit()
     cur.close()
     conn.close()
@@ -296,9 +282,6 @@ def create_postgresql_table(user, password, database):
     insert_query += placeholders
     insert_query += f')'
 
-    # print(drop_query)
-    # print(create_query)
-    # print(insert_query)
     cur.execute(drop_query)
     cur.execute(create_query)
     for row in data:
@@ -405,7 +388,7 @@ def create_couchbase_collection(user, password):
                         value = float(row[i])
                     elif type == 'date':
                         value = datetime.strptime(row[i], '%Y-%m-%d').date()
-                        value=value.isoformat()
+                        value = value.isoformat()
                     else:
                         value = row[i]
                     doc[name] = value
@@ -473,16 +456,16 @@ def enter_queries():
     databases1.append("Mongodb")
     databases1.append("Couchbase")
     eff_total_consumption = []
-    eff_total_consumption.append(mysql_res[2])
-    eff_total_consumption.append(postgresql_res[2])
-    eff_total_consumption.append(mongodb_res[2])
-    eff_total_consumption.append(couchbase_res[2])
+    eff_total_consumption.append(mysql_res[4])
+    eff_total_consumption.append(postgresql_res[4])
+    eff_total_consumption.append(mongodb_res[4])
+    eff_total_consumption.append(couchbase_res[4])
 
     eff_co2_emissions = []
-    eff_co2_emissions.append(mysql_res[3])
-    eff_co2_emissions.append(postgresql_res[3])
-    eff_co2_emissions.append(mongodb_res[3])
-    eff_co2_emissions.append(couchbase_res[3])
+    eff_co2_emissions.append(mysql_res[6])
+    eff_co2_emissions.append(postgresql_res[6])
+    eff_co2_emissions.append(mongodb_res[6])
+    eff_co2_emissions.append(couchbase_res[6])
     databases_total_dict = {index: name for index,
                             name in zip(eff_total_consumption, databases)}
     databases_co2_dict = {index: name for index,
@@ -494,30 +477,26 @@ def enter_queries():
     eff_res.append(sorted_total[0])
     eff_res.append(sorted_co2[0])
     miles = []
-    miles.append(mysql_res[4])
-    miles.append(postgresql_res[4])
-    miles.append(mongodb_res[4])
-    miles.append(couchbase_res[4])
+    miles.append(mysql_res[7])
+    miles.append(postgresql_res[7])
+    miles.append(mongodb_res[7])
+    miles.append(couchbase_res[7])
     tv = []
-    tv.append(mysql_res[5])
-    tv.append(postgresql_res[5])
-    tv.append(mongodb_res[5])
-    tv.append(couchbase_res[5])
+    tv.append(mysql_res[8])
+    tv.append(postgresql_res[8])
+    tv.append(mongodb_res[8])
+    tv.append(couchbase_res[8])
     miles.sort()
     tv.sort()
     eff_res.append(miles[0])
     eff_res.append(tv[0])
-    return render_template('compare_result.html', mysql_cpu_consumption=mysql_res[0], mysql_ram_consumption=mysql_res[1], mysql_total_consumption=mysql_res[2],
-                           mysql_co2_emissions=mysql_res[3], mysql_miles_equvivalence=mysql_res[
-                               4], mysql_tv_equvivalence=mysql_res[5],
-                           postgresql_cpu_consumption=postgresql_res[0], postgresql_ram_consumption=postgresql_res[
-                               1], postgresql_total_consumption=postgresql_res[2],
-                           postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[
-                               4], postgresql_tv_equvivalence=postgresql_res[5],
-                           mongodb_cpu_consumption=mongodb_res[0], mongodb_ram_consumption=mongodb_res[1], mongodb_total_consumption=mongodb_res[
-                               2], mongodb_co2_emissions=mongodb_res[3], mongodb_miles_equvivalence=mongodb_res[4], mongodb_tv_equvivalence=mongodb_res[5],
-                           couchbase_cpu_consumption=couchbase_res[0], couchbase_ram_consumption=couchbase_res[1], couchbase_total_consumption=couchbase_res[
-                               2], couchbase_co2_emissions=couchbase_res[3], couchbase_miles_equvivalence=couchbase_res[4], couchbase_tv_equvivalence=couchbase_res[5],
+    return render_template('compare_result.html', mysql_cpu_consumption_kwh=mysql_res[0], mysql_cpu_consumption_j=mysql_res[1], mysql_ram_consumption_kwh=mysql_res[2], mysql_ram_consumption_j=mysql_res[3], mysql_total_consumption_kwh=mysql_res[4], mysql_total_consumption_j=mysql_res[5], mysql_co2_emissions=mysql_res[6], mysql_miles_equvivalence=mysql_res[7], mysql_tv_equvivalence=mysql_res[8],
+                           postgresql_cpu_consumption_kwh=postgresql_res[0], postgresql_cpu_consumption_j=postgresql_res[1], postgresql_ram_consumption_kwh=postgresql_res[2], postgresql_ram_consumption_j=postgresql_res[3], postgresql_total_consumption_kwh=postgresql_res[
+                               4], postgresql_total_consumption_j=postgresql_res[5], postgresql_co2_emissions=postgresql_res[6], postgresql_miles_equvivalence=postgresql_res[7], postgresql_tv_equvivalence=postgresql_res[8],
+                           mongodb_cpu_consumption_kwh=mongodb_res[0], mongodb_cpu_consumption_j=mongodb_res[1], mongodb_ram_consumption_kwh=mongodb_res[2], mongodb_ram_consumption_j=mongodb_res[
+                               3], mongodb_total_consumption_kwh=mongodb_res[4], mongodb_total_consumption_j=mongodb_res[5], mongodb_co2_emissions=mongodb_res[6], mongodb_miles_equvivalence=mongodb_res[7], mongodb_tv_equvivalence=mongodb_res[8],
+                           couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
+                               4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
                            efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
 
 
@@ -567,16 +546,16 @@ def compare():
     databases1.append("Mongodb")
     databases1.append("Couchbase")
     eff_total_consumption = []
-    eff_total_consumption.append(mysql_res[2])
-    eff_total_consumption.append(postgresql_res[2])
-    eff_total_consumption.append(mongodb_res[2])
-    eff_total_consumption.append(couchbase_res[2])
+    eff_total_consumption.append(mysql_res[4])
+    eff_total_consumption.append(postgresql_res[4])
+    eff_total_consumption.append(mongodb_res[4])
+    eff_total_consumption.append(couchbase_res[4])
 
     eff_co2_emissions = []
-    eff_co2_emissions.append(mysql_res[3])
-    eff_co2_emissions.append(postgresql_res[3])
-    eff_co2_emissions.append(mongodb_res[3])
-    eff_co2_emissions.append(couchbase_res[3])
+    eff_co2_emissions.append(mysql_res[6])
+    eff_co2_emissions.append(postgresql_res[6])
+    eff_co2_emissions.append(mongodb_res[6])
+    eff_co2_emissions.append(couchbase_res[6])
     databases_total_dict = {index: name for index,
                             name in zip(eff_total_consumption, databases)}
     databases_co2_dict = {index: name for index,
@@ -588,30 +567,26 @@ def compare():
     eff_res.append(sorted_total[0])
     eff_res.append(sorted_co2[0])
     miles = []
-    miles.append(mysql_res[4])
-    miles.append(postgresql_res[4])
-    miles.append(mongodb_res[4])
-    miles.append(couchbase_res[4])
+    miles.append(mysql_res[7])
+    miles.append(postgresql_res[7])
+    miles.append(mongodb_res[7])
+    miles.append(couchbase_res[7])
     tv = []
-    tv.append(mysql_res[5])
-    tv.append(postgresql_res[5])
-    tv.append(mongodb_res[5])
-    tv.append(couchbase_res[5])
+    tv.append(mysql_res[8])
+    tv.append(postgresql_res[8])
+    tv.append(mongodb_res[8])
+    tv.append(couchbase_res[8])
     miles.sort()
     tv.sort()
     eff_res.append(miles[0])
     eff_res.append(tv[0])
-    return render_template('compare_result.html', mysql_cpu_consumption=mysql_res[0], mysql_ram_consumption=mysql_res[1], mysql_total_consumption=mysql_res[2],
-                           mysql_co2_emissions=mysql_res[3], mysql_miles_equvivalence=mysql_res[
-                               4], mysql_tv_equvivalence=mysql_res[5],
-                           postgresql_cpu_consumption=postgresql_res[0], postgresql_ram_consumption=postgresql_res[
-                               1], postgresql_total_consumption=postgresql_res[2],
-                           postgresql_co2_emissions=postgresql_res[3], postgresql_miles_equvivalence=postgresql_res[
-                               4], postgresql_tv_equvivalence=postgresql_res[5],
-                           mongodb_cpu_consumption=mongodb_res[0], mongodb_ram_consumption=mongodb_res[1], mongodb_total_consumption=mongodb_res[
-                               2], mongodb_co2_emissions=mongodb_res[3], mongodb_miles_equvivalence=mongodb_res[4], mongodb_tv_equvivalence=mongodb_res[5],
-                           couchbase_cpu_consumption=couchbase_res[0], couchbase_ram_consumption=couchbase_res[1], couchbase_total_consumption=couchbase_res[
-                               2], couchbase_co2_emissions=couchbase_res[3], couchbase_miles_equvivalence=couchbase_res[4], couchbase_tv_equvivalence=couchbase_res[5],
+    return render_template('compare_result.html', mysql_cpu_consumption_kwh=mysql_res[0], mysql_cpu_consumption_j=mysql_res[1], mysql_ram_consumption_kwh=mysql_res[2], mysql_ram_consumption_j=mysql_res[3], mysql_total_consumption_kwh=mysql_res[4], mysql_total_consumption_j=mysql_res[5], mysql_co2_emissions=mysql_res[6], mysql_miles_equvivalence=mysql_res[7], mysql_tv_equvivalence=mysql_res[8],
+                           postgresql_cpu_consumption_kwh=postgresql_res[0], postgresql_cpu_consumption_j=postgresql_res[1], postgresql_ram_consumption_kwh=postgresql_res[2], postgresql_ram_consumption_j=postgresql_res[3], postgresql_total_consumption_kwh=postgresql_res[
+                               4], postgresql_total_consumption_j=postgresql_res[5], postgresql_co2_emissions=postgresql_res[6], postgresql_miles_equvivalence=postgresql_res[7], postgresql_tv_equvivalence=postgresql_res[8],
+                           mongodb_cpu_consumption_kwh=mongodb_res[0], mongodb_cpu_consumption_j=mongodb_res[1], mongodb_ram_consumption_kwh=mongodb_res[2], mongodb_ram_consumption_j=mongodb_res[
+                               3], mongodb_total_consumption_kwh=mongodb_res[4], mongodb_total_consumption_j=mongodb_res[5], mongodb_co2_emissions=mongodb_res[6], mongodb_miles_equvivalence=mongodb_res[7], mongodb_tv_equvivalence=mongodb_res[8],
+                           couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
+                               4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
                            efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
 
 
@@ -752,8 +727,11 @@ def execute_mysql_query(query, db_user, db_password, db_name):
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
+    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
+    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
+    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
@@ -780,8 +758,11 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
+    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
+    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
+    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
@@ -812,8 +793,11 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
+    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
+    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
+    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
@@ -955,8 +939,11 @@ def execute_mongodb_query(query, db_name):
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
+    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
+    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
+    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
