@@ -18,13 +18,14 @@ import base64
 import psycopg2
 import uuid
 import couchbase
+import itertools
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions, QueryOptions
 from couchbase.management.buckets import BucketSettings, CreateBucketSettings
 from couchbase.exceptions import BucketNotFoundException
 from couchbase.n1ql import N1QLQuery
-#from couchbase.cluster import BucketType
+from queries import mysql_queries, mongodb_queries, postgresql_queries, couchbase_queries
 from datetime import datetime
 from decimal import Decimal
 
@@ -129,7 +130,8 @@ def table_creation():
     d = create_couchbase_collection(
         couchbase_username, couchbase_password)
     if a == 'success' and b == 'success' and c == 'success' and d == 'success':
-        return render_template('enter_queries.html', table_name=table_name)
+        # return render_template('enter_queries.html', table_name=table_name)
+        return generate_csv()
     else:
         return "Unsuccessfull!"
 
@@ -409,6 +411,54 @@ def create_couchbase_collection(user, password):
         return "success"
     except Exception as e:
         print(f"Error: {str(e)}")
+
+
+# @app.route('/csv')
+def generate_csv():
+    mysql_username = session.get('mysql_username', None)
+    mysql_db_name = session.get('mysql_db_name', None)
+    mysql_password = session.get('mysql_password', None)
+
+    mongodb_db_name = session.get('mongodb_db_name', None)
+
+    postgresql_username = session.get('postgresql_username', None)
+    postgresql_db_name = session.get('postgresql_db_name', None)
+    postgresql_password = session.get('postgresql_password', None)
+
+    couchbase_username = session.get('couchbase_username', None)
+    couchbase_password = session.get('couchbase_password', None)
+    couchbase_bucket_name = session.get('table_name', None)
+
+    filename = session.get('filename', None)
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    file_name = f"{timestamp}_{filename}.csv"
+    path = 'results/' + file_name
+    with open(path, 'w', newline='') as csvfile:
+        fieldNames = ['MySQL query', 'Postgresql query', 'Mongodb query',
+                      'Couchbase query', 'mysql_CPU(Kwh)', 'mysql_RAM(Kwh)', 'mysql_Total(Kwh)', 'mysql_CO2(Kg)', 'postgresql_CPU(Kwh)', 'postgresql_RAM(Kwh)', 'postgresql_Total(Kwh)', 'postgresql_CO2(Kg)', 'mongodb_CPU(Kwh)', 'mongodb_RAM(Kwh)', 'mongodb_Total(Kwh)', 'mongodb_CO2(Kg)', 'couchbase_CPU(Kwh)', 'couchbase_RAM(Kwh)', 'couchbase_Total(Kwh)', 'couchbase_CO2(Kg)']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
+        writer.writeheader()
+
+        combinations = itertools.product(
+            mysql_queries, postgresql_queries, mongodb_queries, couchbase_queries)
+
+        for a, b, c, d in combinations:
+            time.sleep(1)
+            mysql_res = execute_mysql_query(
+                a, mysql_username, mysql_password, mysql_db_name)
+            time.sleep(1)
+            postgresql_res = execute_postgreSQL_query(
+                b, postgresql_username, postgresql_password, postgresql_db_name)
+            time.sleep(1)
+            mongodb_res = execute_mongodb_query(c, mongodb_db_name)
+            time.sleep(1)
+            couchbase_res = execute_couchbase_query(
+                d, couchbase_username, couchbase_password, couchbase_bucket_name)
+            time.sleep(1)
+
+            writer.writerow({'MySQL query': a, 'Postgresql query': b, 'Mongodb query': c,
+                             'Couchbase query': d, 'mysql_CPU(Kwh)': mysql_res[0], 'mysql_RAM(Kwh)': mysql_res[2], 'mysql_Total(Kwh)': mysql_res[4], 'mysql_CO2(Kg)': mysql_res[6], 'postgresql_CPU(Kwh)': postgresql_res[0], 'postgresql_RAM(Kwh)': postgresql_res[2], 'postgresql_Total(Kwh)': postgresql_res[4], 'postgresql_CO2(Kg)': postgresql_res[6], 'mongodb_CPU(Kwh)': mongodb_res[0], 'mongodb_RAM(Kwh)': mongodb_res[2], 'mongodb_Total(Kwh)': mongodb_res[4], 'mongodb_CO2(Kg)': mongodb_res[6], 'couchbase_CPU(Kwh)': couchbase_res[0], 'couchbase_RAM(Kwh)': couchbase_res[2], 'couchbase_Total(Kwh)': couchbase_res[4], 'couchbase_CO2(Kg)': couchbase_res[6]})
+    return 'CSV file generated successfully'
 
 
 @app.route('/enter_queries', methods=['POST'])
