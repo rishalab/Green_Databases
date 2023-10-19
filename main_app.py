@@ -684,7 +684,6 @@ def display1():
 
 @Source : EPA
 
-done by Namitha
 '''
 
 
@@ -701,7 +700,6 @@ def carbon_to_miles(kg_carbon):
 
 @Source : EPA
 
-done by Namitha
 '''
 
 
@@ -717,7 +715,7 @@ def carbon_to_tv(kg_carbon):
 @output: Boolean - True - SQL       
 @desc  : detects whether given query is SQL or not
 
-done by Poojasree
+
 '''
 
 
@@ -735,7 +733,6 @@ def is_sql(query):
 @output: Boolean - True - NoSQL     
 @desc  : detects whether given query is NoSQL or not
 
-done by Manasa
 '''
 
 
@@ -756,18 +753,18 @@ def is_nosql(query):
 @output: Array consists of query energy consumption by CPU,RAM and CO2 emissions
 @desc  : calculates the cpu,ram consumptions and CO2 emissions of SQL query by initializing a tracker object just before the start of the query execution and the object stops at the end of query execution
 
-done by Manasa and Namitha
 '''
 
 
 def execute_mysql_query(query, db_user, db_password, db_name):
+    connection = mysql.connector.connect(
+        user=db_user, password=db_password, host='localhost', database=db_name)
+    cursor = connection.cursor()
     obj = Tracker()
     # Tracker object starts to calculate the cpu,ram consumptions
     obj.start()
     res = []
-    connection = mysql.connector.connect(
-        user=db_user, password=db_password, host='localhost', database=db_name)
-    cursor = connection.cursor()
+
     cursor.execute(query)
     splitted_query = query.upper().split()
     if splitted_query[0] == "DELETE" or splitted_query[0] == "UPDATE" or (splitted_query[0] == "INSERT" and splitted_query[1] == "INTO"):
@@ -797,13 +794,14 @@ def execute_mysql_query(query, db_user, db_password, db_name):
 
 
 def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_password, postgresql_db_name):
+    connection = psycopg2.connect(
+        host='localhost', database=postgresql_db_name, user=postgresql_user, password=postgresql_password)
+    cursor = connection.cursor()
     obj = Tracker()
     # Tracker object starts to calculate the cpu,ram consumptions
     obj.start()
     res = []
-    connection = psycopg2.connect(
-        host='localhost', database=postgresql_db_name, user=postgresql_user, password=postgresql_password)
-    cursor = connection.cursor()
+
     cursor.execute(postgresql_query)
     connection.commit()
     cursor.close()
@@ -828,10 +826,6 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
 
 
 def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name):
-    obj = Tracker()
-    # Tracker object starts to calculate the cpu,ram consumptions
-    obj.start()
-    res = []
     auth = PasswordAuthenticator(couchbase_username, couchbase_password)
     cluster = Cluster.connect('couchbase://localhost', ClusterOptions(auth))
 
@@ -840,9 +834,15 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
 
     # get a reference to the default collection
     cb_coll = cb.default_collection()
+
+    obj = Tracker()
+    # Tracker object starts to calculate the cpu,ram consumptions
+    obj.start()
+    res = []
+
     query_res = cluster.query(couchbase_query)
-    for row in query_res:
-        print(f'Found row: {row}')
+    # for row in query_res:
+    #     print(f'Found row: {row}')
     # Tracker object stops
     obj.stop()
 
@@ -867,7 +867,6 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
 @output: Array consists of query energy consumption by CPU,RAM and CO2 emissions
 @desc  : calculates the cpu,ram consumptions and CO2 emissions of MongoDB query by initializing a tracker object just before the start of the query execution and the object stops at the end of query execution
 
-done by Poojasree
 '''
 
 
@@ -897,53 +896,33 @@ def execute_mongodb_query(query, db_name):
     if "insertOne" in query_field:
         print("inserting one document")
         query_doc = query_field.split('insertOne(')[1].split(')')[0]
-        # split_quer_doc = query_doc.split(',')
-        # arg_dict = []
-        # for q in split_quer_doc:
-        #     arg_dict.append(eval(q))
         arg_dict = eval(query_doc)
         result = collection.insert_one(arg_dict)
         print(result)
 
-    if "insertMany" in query_field:
+    elif "insertMany" in query_field:
         print("inserting many documents")
         query_doc = query_field.split('insertMany(')[1].split(')')[0]
-        split_quer_doc = query_doc.split(',')
-        arg_dict = []
-        for q in split_quer_doc:
-            arg_dict.append(eval(q))
-
-        result = collection.insert_many(*arg_dict)
+        arg_dict = eval(query_doc)
+        result = collection.insert_many(arg_dict)
         print(result)
 
-    if "find" in query_field:
+    elif "findOne" in query_field:
+        print("finding documents")
+        query_doc = query_field.split('findOne(')[1].split(')')[0]
+        arg_dict = eval(query_doc)
+        result = collection.find_one(arg_dict)
+        print(result)
+
+    elif "find" in query_field:
         print("finding documents")
         query_doc = query_field.split('find(')[1].split(')')[0]
         print(query_doc)
-        if query_doc == '':
-            print("no doc")
-            result = collection.find()
-            print(result)
-        else:
-            split_quer_doc = query_doc.split(',')
-            arg_dict = []
-            for q in split_quer_doc:
-                arg_dict.append(eval(q))
+        arg_dict = eval(query_doc)
+        result = collection.find(arg_dict)
+        print(result)
 
-            result = collection.find(*arg_dict)
-            print(result)
-
-    if "findOne" in query_field:
-        print("finding documents")
-        query_doc = query_field.split('findOne(')[1].split(')')[0]
-        split_quer_doc = query_doc.split(',')
-        arg_dict = []
-        for q in split_quer_doc:
-            arg_dict.append(eval(q))
-
-        result = collection.find_one(*arg_dict)
-
-    if "updateOne" in query_field:
+    elif "updateOne" in query_field:
         print("update one document")
         query_doc = query_field.split('updateOne(')[1].split(')')[0]
         split_quer_doc = query_doc.split(',')
@@ -955,8 +934,8 @@ def execute_mongodb_query(query, db_name):
         result = collection.update_one(*arg_dict)
         print(result.modified_count)
 
-    if "updateMany" in query_field:
-        print("update one document")
+    elif "updateMany" in query_field:
+        print("update many documents")
         query_doc = query_field.split('updateMany(')[1].split(')')[0]
         split_quer_doc = query_doc.split(',')
         arg_dict = []
@@ -966,7 +945,7 @@ def execute_mongodb_query(query, db_name):
         result = collection.update_many(*arg_dict)
         print(result.modified_count)
 
-    if "deleteOne" in query_field:
+    elif "deleteOne" in query_field:
         print("deleting one document")
         query_doc = query_field.split('deleteOne(')[1].split(')')[0]
         split_quer_doc = query_doc.split(',')
@@ -977,7 +956,7 @@ def execute_mongodb_query(query, db_name):
         result = collection.delete_one(*arg_dict)
         print(result)
 
-    if "deleteMany" in query_field:
+    elif "deleteMany" in query_field:
         print("deleting many documents")
         query_doc = query_field.split('deleteMany(')[1].split(')')[0]
         split_quer_doc = query_doc.split(',')
