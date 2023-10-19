@@ -8,6 +8,7 @@
     integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 	<title>EcoDB</title>
 	<link rel="stylesheet" href="../static/ecodb_result.css">
+	<link rel="stylesheet" href="../static/ecodb.css">
 </head>
 <body>
 	<div class="container-xxl">
@@ -75,5 +76,7 @@
 			</div>
 		</div>
 	</div>
+
+	<button class="home-btn" onclick="window.location.href='{{ url_for('index')}}'">Go home</button>
 </body>
 </html>
