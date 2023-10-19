@@ -130,8 +130,8 @@ def table_creation():
     d = create_couchbase_collection(
         couchbase_username, couchbase_password)
     if a == 'success' and b == 'success' and c == 'success' and d == 'success':
-        # return render_template('enter_queries.html', table_name=table_name)
-        return generate_csv()
+        return render_template('csv_choice.html', table_name=table_name)
+        # return generate_csv()
     else:
         return "Unsuccessfull!"
 
@@ -156,6 +156,11 @@ def prim_key():
 @app.route('/choice')
 def choice():
     return render_template('choice.html')
+
+
+@app.route('/queries')
+def queries():
+    return render_template('enter_queries.html')
 
 
 @app.route('/comparision')
@@ -413,7 +418,7 @@ def create_couchbase_collection(user, password):
         print(f"Error: {str(e)}")
 
 
-# @app.route('/csv')
+@app.route('/generate_csv')
 def generate_csv():
     mysql_username = session.get('mysql_username', None)
     mysql_db_name = session.get('mysql_db_name', None)
