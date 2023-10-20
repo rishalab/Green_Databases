@@ -32,6 +32,9 @@
                     <input class="home-btn" type="submit" />
                 </div>
             </form>
+            {% if not_uploaded %}
+                <p class="error">{{ not_uploaded }}</p>
+            {% endif %}
         </div>
         <button class="home-btn" onclick="window.location.href='{{ url_for('choice')}}'">Go back</button>
     </div>

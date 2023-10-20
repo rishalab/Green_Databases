@@ -744,6 +744,10 @@ def is_sql(query):
     for keyword in sql_keywords:
         if re.search(r"\b" + keyword + r"\b", query.upper()):
             return True
+        
+    query_split = query.split(' ')
+    if query_split[0] == "insert" or "INSERT":
+        return True
     return False
 
 
