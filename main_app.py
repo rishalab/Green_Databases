@@ -160,7 +160,7 @@ def choice():
     return render_template('choice.html')
 
 
-@app.route('/queries')
+@app.route('/input-queries')
 def queries():
     return render_template('enter_queries.html')
 
