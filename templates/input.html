@@ -18,44 +18,47 @@
                 <div class="col-md-6 no-gutters">
                     <div class="leftside d-flex align-items-center justify-content-center">
                         <div class="comp-card">
+                            <header class="home-header" style="color: #00ced1;">
+                                <h2>SQL Details</h2>
+                            </header>
                             <div class="sql">
                                 <div class="comp-wrapper">
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">MySQL Username</h4>
                                     </header>
                                     <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text" name="mysql_username"
-                                        id="mysql_username" autocomplete="off">
+                                        id="mysql_username" autocomplete="off" required>
                                 </div>
                                 <div class="comp-box">
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">MySQL Database Name</h4>
                                     </header>
                                     <input placeholder="Database Name" class="comp-dbname" spellcheck="false"
-                                        type="text" name="mysql_db_name" id="mysql_db_name" autocomplete="off">
+                                        type="text" name="mysql_db_name" id="mysql_db_name" autocomplete="off" required>
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">MySQL Database Password</h4>
                                     </header>
                                     <input placeholder="Database Password" class="comp-dbname" spellcheck="false"
-                                        type="password" name="mysql_password" id="mysql_password" autocomplete="off">
+                                        type="password" name="mysql_password" id="mysql_password" autocomplete="off" required>
                                 </div>
                                 <div class="comp-wrapper">
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">PostgreSQL Username</h4>
                                     </header>
                                     <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text" name="postgresql_username"
-                                        id="mysql_db_name" autocomplete="off">
+                                        id="mysql_db_name" autocomplete="off" required>
                                 </div>
                                 <div class="comp-box">
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">PostgreSQL Database Name</h4>
                                     </header>
                                     <input placeholder="Database Name" class="comp-dbname" spellcheck="false"
-                                        type="text" name="postgresql_db_name" id="postgresql_db_name" autocomplete="off">
+                                        type="text" name="postgresql_db_name" id="postgresql_db_name" autocomplete="off" required>
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">PostgreSQL Database Password</h4>
                                     </header>
                                     <input placeholder="Database Password" class="comp-dbname" spellcheck="false"
-                                        type="password" name="postgresql_password" id="postgresql_password" autocomplete="off">
+                                        type="password" name="postgresql_password" id="postgresql_password" autocomplete="off" required>
                                 </div>
                             </div>
                             {% if not_query %}
@@ -68,31 +71,28 @@
                 <div class="col-md-6 no-gutters">
                     <div class="rightside d-flex align-items-center justify-content-center">
                         <div class="comp-card">
+                            <header class="home-header" style="position: relative;">
+                                <h2>NoSQL Details</h2>
+                            </header>
                             <div class="no-sql">
-                                <div class="comp-wrapper">
-                                    <header>
-                                        <h4 class="headings"></h4>
-                                    </header>
-                                    
-                                </div>
                                 <div class="comp-box">
                                     <header>
                                         <h4 class="headings">MongoDB Database Name</h4>
                                     </header>
                                     <input placeholder="Database Name" class="comp-dbname" spellcheck="false"
-                                        type="text" name="mongodb_db_name" id="mongodb_db_name" autocomplete="off">
+                                        type="text" name="mongodb_db_name" id="mongodb_db_name" autocomplete="off" required>
                                 </div>
                                 <div class="comp-box">
                                     <header>
                                         <h4 class="headings">Couchbase Username</h4>
                                     </header>
                                     <input placeholder="Username" class="comp-dbname" spellcheck="false" type="text"
-                                        name="couchbase_username" id="couchbase_username" autocomplete="off">
+                                        name="couchbase_username" id="couchbase_username" autocomplete="off" required>
                                     <header>
                                         <h4 class="headings">Couchbase Password</h4>
                                     </header>
                                     <input placeholder="Password" class="comp-dbname" spellcheck="false" type="password"
-                                        name="couchbase_password" id="couchbase_password" autocomplete="off">
+                                        name="couchbase_password" id="couchbase_password" autocomplete="off" required>
                                     <header>
                                 </div>
                             </div>
@@ -108,8 +108,10 @@
                 </div>
                 <div class="col-4"></div>
 
-
             </div>
+        </form>
+        <form method="GET" action="{{ url_for('table_creation') }}">
+            <button class="btn  btn-block back-btn" onclick="window.location.href='{{ url_for('upload')}}'">Go back</button>
         </form>
     </div>
 

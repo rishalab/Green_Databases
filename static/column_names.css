@@ -34,7 +34,16 @@ body {
     align-items: center;
     font-size: 15px;
     width: 200px;
-    margin-top: 3%;
+}
+.back-btn {
+    position: absolute;
+    transform: translateX(-50%);
+    background-color: #0f9ea5;
+    font-size: 1.3rem;
+    font-weight: 500;
+    align-items: center;
+    font-size: 15px;
+    width: 10%;
 }
 @media screen and (min-width:768px) {
 

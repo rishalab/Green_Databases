@@ -6,10 +6,12 @@
   padding: 0;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
+  
 }
 
 body {
   min-height: 100vh;
+  background-color: black;
 }
 .compare-container {
   display: grid;
@@ -21,7 +23,7 @@ body {
 .rightside,
 .leftside-1,
 .rightside-1 {
-  height: 50vh;
+  height: 50%;
   width: 100%;
 }
 
@@ -57,12 +59,12 @@ table {
   overflow: hidden;
 }
 .result-header {
-  margin: 10px;
-  text-align: center;
+  /* margin: 10px; */
+  /* text-align: center; */
   font-size: 20px;
 }
 
-.result-header,.result-card p {
+.result-card p {
   color: #00ced1;
   font-size: 15px;
   font-weight: 500;
@@ -104,4 +106,20 @@ th {
   margin-left: auto;
   margin-right: auto;
   display: block;
+}
+.back-btn {
+  position: absolute;
+  /* bottom: 1rem; */
+  /* left: 5%; */
+  width: 15%;
+  height: 8%;
+  transform: translateX(50%);
+  transform: translateY(300%);
+  background-color: #0f9ea5;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.bottom-row{
+  position: relative;
 }

@@ -28,10 +28,10 @@ body {
 .comp-wrapper textarea {
     width: 100%;
     resize: none;
-    height: 40px;
+    height: 35px;
     outline: none;
     padding: 5px;
-    font-size: 16px;
+    font-size: 12px;
     margin-top: 5px;
     margin-bottom: 5px;
     border-radius: 5px;
@@ -50,10 +50,10 @@ textarea::-webkit-scrollbar {
 .comp-dbname {
     width: 100%;
     resize: none;
-    height: 40px;
+    height: 35px;
     outline: none;
     padding: 15px;
-    font-size: 16px;
+    font-size: 12px;
     margin-top: 5px;
     margin-bottom: 5px;
     border-radius: 5px;
@@ -65,12 +65,26 @@ textarea::-webkit-scrollbar {
     position: absolute;
     bottom: 1rem;
     left: 65%;
-    height: 50px;
+    height: 40px;
+    width:30%;
     transform: translateX(-50%);
     background-color: #0f9ea5;
     font-size:1.3rem;
     font-weight: 500;
 }
+
+.back-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 5%;
+    width: 7%;
+    height: 5%;
+    transform: translateX(-50%);
+    background-color: #0f9ea5;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
 .comp-container{
     display: flex;
         flex-wrap: wrap;
