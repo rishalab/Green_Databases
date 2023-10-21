@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Database Input Form</title>
+</head>
+
+<body>
+    <h1>Select Database Type</h1>
+    <form method="POST" action="/process">
+        <select name="database_type" id="database_type">
+            <option value="" selected disabled>Select a Database</option> <!-- Default option with no value -->
+            <option value="mysql">MySQL</option>
+            <option value="postgresql">PostgreSQL</option>
+            <option value="mongodb">MongoDB</option>
+            <option value="couchbase">Couchbase</option>
+        </select>
+        <br>
+
+        <div id="username_container" style="display: none;">
+            <label for="username">Username:</label>
+            <input type="text" name="username"><br>
+        </div>
+
+        <div id="password_container" style="display: none;">
+            <label for="password">Password:</label>
+            <input type="password" name="password"><br>
+        </div>
+
+        <div id="database_name_container" style="display: none;">
+            <label for="database_name">Database Name:</label>
+            <input type="text" name="database_name"><br>
+        </div>
+
+        <div id="query_container" style="display: none;">
+            <label for="query">Query:</label>
+            <textarea name="query"></textarea><br>
+        </div>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById("database_type").addEventListener("change", function () {
+            var selectedOption = this.value;
+
+            // Hide all input containers
+            document.getElementById("username_container").style.display = "none";
+            document.getElementById("password_container").style.display = "none";
+            document.getElementById("database_name_container").style.display = "none";
+            document.getElementById("query_container").style.display = "none";
+
+            // Show the relevant input container based on the selected option
+            if (selectedOption === "mysql" || selectedOption === "postgresql" || selectedOption === "couchbase") {
+                document.getElementById("username_container").style.display = "block";
+                document.getElementById("password_container").style.display = "block";
+                document.getElementById("database_name_container").style.display = "block";
+                document.getElementById("query_container").style.display = "block";
+            } else if (selectedOption === "mongodb") {
+                document.getElementById("database_name_container").style.display = "block";
+                document.getElementById("query_container").style.display = "block";
+            }
+        });
+    </script>
+</body>
+
+</html>

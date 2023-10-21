@@ -23,7 +23,7 @@ from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions, QueryOptions
 from couchbase.management.buckets import BucketSettings, CreateBucketSettings
-from couchbase.exceptions import BucketNotFoundException
+from couchbase.exceptions import BucketNotFoundException, DocumentNotFoundException
 from couchbase.n1ql import N1QLQuery
 from queries import mysql_queries, mongodb_queries, postgresql_queries, couchbase_queries
 from datetime import datetime
@@ -40,7 +40,7 @@ app.secret_key = 'secret'
 
 @app.route("/")
 def index():
-    return render_template('ecodb.html')
+    return render_template('dbJoules.html')
 
 # functions and routes corresponding to uploading a csv file
 
@@ -197,6 +197,10 @@ def log_file(file_name, data):
     log_file_path = os.path.join("logfiles", log_file_name)
     with open(log_file_path, "w") as f:
         json.dump(data, f, indent=4)
+
+
+def generate_unique_key():
+    return str(uuid.uuid4())
 
 
 def create_mysql_table(user, password, database):
@@ -404,8 +408,8 @@ def create_couchbase_collection(user, password):
 
                 # Insert the document into Couchbase using a unique document ID
                 # Assuming primary_key is the ID field
-                document_id = str(doc[primary_key])
-                collection.upsert(document_id, doc)
+                unique_key = generate_unique_key()
+                collection.upsert(unique_key, doc)
         time.sleep(2)
 
         query = 'CREATE PRIMARY INDEX ON '
@@ -442,7 +446,7 @@ def generate_csv():
     path = 'results/' + file_name
     with open(path, 'w', newline='') as csvfile:
         fieldNames = ['MySQL query', 'Postgresql query', 'Mongodb query',
-                      'Couchbase query', 'mysql_CPU(Kwh)', 'mysql_RAM(Kwh)', 'mysql_Total(Kwh)', 'mysql_CO2(Kg)', 'postgresql_CPU(Kwh)', 'postgresql_RAM(Kwh)', 'postgresql_Total(Kwh)', 'postgresql_CO2(Kg)', 'mongodb_CPU(Kwh)', 'mongodb_RAM(Kwh)', 'mongodb_Total(Kwh)', 'mongodb_CO2(Kg)', 'couchbase_CPU(Kwh)', 'couchbase_RAM(Kwh)', 'couchbase_Total(Kwh)', 'couchbase_CO2(Kg)']
+                      'Couchbase query', 'mysql_CPU(J)', 'mysql_RAM(J)', 'mysql_Total(J)', 'postgresql_CPU(J)', 'postgresql_RAM(J)', 'postgresql_Total(J)', 'mongodb_CPU(J)', 'mongodb_RAM(J)', 'mongodb_Total(J)', 'couchbase_CPU(J)', 'couchbase_RAM(J)', 'couchbase_Total(J)']
         writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
         writer.writeheader()
 
@@ -464,97 +468,109 @@ def generate_csv():
             time.sleep(1)
 
             writer.writerow({'MySQL query': a, 'Postgresql query': b, 'Mongodb query': c,
-                             'Couchbase query': d, 'mysql_CPU(Kwh)': mysql_res[0], 'mysql_RAM(Kwh)': mysql_res[2], 'mysql_Total(Kwh)': mysql_res[4], 'mysql_CO2(Kg)': mysql_res[6], 'postgresql_CPU(Kwh)': postgresql_res[0], 'postgresql_RAM(Kwh)': postgresql_res[2], 'postgresql_Total(Kwh)': postgresql_res[4], 'postgresql_CO2(Kg)': postgresql_res[6], 'mongodb_CPU(Kwh)': mongodb_res[0], 'mongodb_RAM(Kwh)': mongodb_res[2], 'mongodb_Total(Kwh)': mongodb_res[4], 'mongodb_CO2(Kg)': mongodb_res[6], 'couchbase_CPU(Kwh)': couchbase_res[0], 'couchbase_RAM(Kwh)': couchbase_res[2], 'couchbase_Total(Kwh)': couchbase_res[4], 'couchbase_CO2(Kg)': couchbase_res[6]})
+                             'Couchbase query': d, 'mysql_CPU(J)': mysql_res[0], 'mysql_RAM(J)': mysql_res[1], 'mysql_Total(J)': mysql_res[2], 'postgresql_CPU(J)': postgresql_res[0], 'postgresql_RAM(J)': postgresql_res[1], 'postgresql_Total(J)': postgresql_res[2], 'mongodb_CPU(J)': mongodb_res[0], 'mongodb_RAM(J)': mongodb_res[1], 'mongodb_Total(J)': mongodb_res[2], 'couchbase_CPU(J)': couchbase_res[0], 'couchbase_RAM(J)': couchbase_res[1], 'couchbase_Total(J)': couchbase_res[2]})
     return 'CSV file generated successfully'
 
 
-@app.route('/enter_queries', methods=['POST'])
+@app.route('/enter_queries', methods=['POST', 'GET'])
 def enter_queries():
-    mysql_query = request.form['mysql_query']
-    mongodb_query = request.form['mongodb_query']
-    postgresql_query = request.form['postgresql_query']
-    couchbase_query = request.form['couchbase_query']
+    if request.method == 'POST':
 
-    mysql_username = session.get('mysql_username', None)
-    mysql_db_name = session.get('mysql_db_name', None)
-    mysql_password = session.get('mysql_password', None)
+        mysql_query = request.form['mysql_query']
+        mongodb_query = request.form['mongodb_query']
+        postgresql_query = request.form['postgresql_query']
+        couchbase_query = request.form['couchbase_query']
 
-    mongodb_db_name = session.get('mongodb_db_name', None)
+        mysql_username = session.get('mysql_username', None)
+        mysql_db_name = session.get('mysql_db_name', None)
+        mysql_password = session.get('mysql_password', None)
 
-    postgresql_username = session.get('postgresql_username', None)
-    postgresql_db_name = session.get('postgresql_db_name', None)
-    postgresql_password = session.get('postgresql_password', None)
+        mongodb_db_name = session.get('mongodb_db_name', None)
 
-    couchbase_username = session.get('couchbase_username', None)
-    couchbase_password = session.get('couchbase_password', None)
-    couchbase_bucket_name = session.get('table_name', None)
+        postgresql_username = session.get('postgresql_username', None)
+        postgresql_db_name = session.get('postgresql_db_name', None)
+        postgresql_password = session.get('postgresql_password', None)
 
-    time.sleep(1)
-    mysql_res = execute_mysql_query(
-        mysql_query, mysql_username, mysql_password, mysql_db_name)
-    time.sleep(1)
-    postgresql_res = execute_postgreSQL_query(
-        postgresql_query, postgresql_username, postgresql_password, postgresql_db_name)
-    time.sleep(1)
-    mongodb_res = execute_mongodb_query(mongodb_query, mongodb_db_name)
-    time.sleep(1)
-    couchbase_res = execute_couchbase_query(
-        couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name)
-    time.sleep(1)
-    eff_res = []
-    databases = []
-    databases.append("MySQl")
-    databases.append("PostgreSQl")
-    databases.append("Mongodb")
-    databases.append("Couchbase")
-    databases1 = []
-    databases1.append("MySQl")
-    databases1.append("PostgreSQl")
-    databases1.append("Mongodb")
-    databases1.append("Couchbase")
-    eff_total_consumption = []
-    eff_total_consumption.append(mysql_res[4])
-    eff_total_consumption.append(postgresql_res[4])
-    eff_total_consumption.append(mongodb_res[4])
-    eff_total_consumption.append(couchbase_res[4])
+        couchbase_username = session.get('couchbase_username', None)
+        couchbase_password = session.get('couchbase_password', None)
+        couchbase_bucket_name = session.get('table_name', None)
 
-    eff_co2_emissions = []
-    eff_co2_emissions.append(mysql_res[6])
-    eff_co2_emissions.append(postgresql_res[6])
-    eff_co2_emissions.append(mongodb_res[6])
-    eff_co2_emissions.append(couchbase_res[6])
-    databases_total_dict = {index: name for index,
-                            name in zip(eff_total_consumption, databases)}
-    databases_co2_dict = {index: name for index,
-                          name in zip(eff_co2_emissions, databases1)}
-    sorted_total = [databases_total_dict[i]
-                    for i in sorted(databases_total_dict, key=lambda x: Decimal(x))]
-    sorted_co2 = [databases_co2_dict[j]
-                  for j in sorted(databases_co2_dict, key=lambda x: Decimal(x))]
-    eff_res.append(sorted_total[0])
-    eff_res.append(sorted_co2[0])
-    miles = []
-    miles.append(mysql_res[7])
-    miles.append(postgresql_res[7])
-    miles.append(mongodb_res[7])
-    miles.append(couchbase_res[7])
-    tv = []
-    tv.append(mysql_res[8])
-    tv.append(postgresql_res[8])
-    tv.append(mongodb_res[8])
-    tv.append(couchbase_res[8])
-    miles.sort()
-    tv.sort()
-    eff_res.append(miles[0])
-    eff_res.append(tv[0])
-    return render_template('compare_result.html', mysql_cpu_consumption_kwh=mysql_res[0], mysql_cpu_consumption_j=mysql_res[1], mysql_ram_consumption_kwh=mysql_res[2], mysql_ram_consumption_j=mysql_res[3], mysql_total_consumption_kwh=mysql_res[4], mysql_total_consumption_j=mysql_res[5], mysql_co2_emissions=mysql_res[6], mysql_miles_equvivalence=mysql_res[7], mysql_tv_equvivalence=mysql_res[8],
-                           postgresql_cpu_consumption_kwh=postgresql_res[0], postgresql_cpu_consumption_j=postgresql_res[1], postgresql_ram_consumption_kwh=postgresql_res[2], postgresql_ram_consumption_j=postgresql_res[3], postgresql_total_consumption_kwh=postgresql_res[
-                               4], postgresql_total_consumption_j=postgresql_res[5], postgresql_co2_emissions=postgresql_res[6], postgresql_miles_equvivalence=postgresql_res[7], postgresql_tv_equvivalence=postgresql_res[8],
-                           mongodb_cpu_consumption_kwh=mongodb_res[0], mongodb_cpu_consumption_j=mongodb_res[1], mongodb_ram_consumption_kwh=mongodb_res[2], mongodb_ram_consumption_j=mongodb_res[
-                               3], mongodb_total_consumption_kwh=mongodb_res[4], mongodb_total_consumption_j=mongodb_res[5], mongodb_co2_emissions=mongodb_res[6], mongodb_miles_equvivalence=mongodb_res[7], mongodb_tv_equvivalence=mongodb_res[8],
-                           couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
-                               4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
-                           efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
+        time.sleep(1)
+        mysql_res = execute_mysql_query(
+            mysql_query, mysql_username, mysql_password, mysql_db_name)
+        time.sleep(1)
+        postgresql_res = execute_postgreSQL_query(
+            postgresql_query, postgresql_username, postgresql_password, postgresql_db_name)
+        time.sleep(1)
+        mongodb_res = execute_mongodb_query(mongodb_query, mongodb_db_name)
+        time.sleep(1)
+        couchbase_res = execute_couchbase_query(
+            couchbase_query, couchbase_username, couchbase_password, couchbase_bucket_name)
+        time.sleep(1)
+        eff_res = []
+        databases = []
+        databases.append("MySQl")
+        databases.append("PostgreSQl")
+        databases.append("Mongodb")
+        databases.append("Couchbase")
+        databases1 = []
+        databases1.append("MySQl")
+        databases1.append("PostgreSQl")
+        databases1.append("Mongodb")
+        databases1.append("Couchbase")
+        eff_total_consumption = []
+        eff_total_consumption.append(mysql_res[4])
+        eff_total_consumption.append(postgresql_res[4])
+        eff_total_consumption.append(mongodb_res[4])
+        eff_total_consumption.append(couchbase_res[4])
+
+        # eff_co2_emissions = []
+        # eff_co2_emissions.append(mysql_res[6])
+        # eff_co2_emissions.append(postgresql_res[6])
+        # eff_co2_emissions.append(mongodb_res[6])
+        # eff_co2_emissions.append(couchbase_res[6])
+        databases_total_dict = {index: name for index,
+                                name in zip(eff_total_consumption, databases)}
+        # databases_co2_dict = {index: name for index,
+        #                       name in zip(eff_co2_emissions, databases1)}
+        sorted_total = [databases_total_dict[i]
+                        for i in sorted(databases_total_dict, key=lambda x: Decimal(x))]
+        # sorted_co2 = [databases_co2_dict[j]
+        #               for j in sorted(databases_co2_dict, key=lambda x: Decimal(x))]
+        # eff_res.append(sorted_total[0])
+        # eff_res.append(sorted_co2[0])
+        # miles = []
+        # miles.append(mysql_res[7])
+        # miles.append(postgresql_res[7])
+        # miles.append(mongodb_res[7])
+        # miles.append(couchbase_res[7])
+        # tv = []
+        # tv.append(mysql_res[8])
+        # tv.append(postgresql_res[8])
+        # tv.append(mongodb_res[8])
+        # tv.append(couchbase_res[8])
+        # miles.sort()
+        # tv.sort()
+        # eff_res.append(miles[0])
+        # eff_res.append(tv[0])
+        # return render_template('compare_result.html', mysql_cpu_consumption_kwh=mysql_res[0], mysql_cpu_consumption_j=mysql_res[1], mysql_ram_consumption_kwh=mysql_res[2], mysql_ram_consumption_j=mysql_res[3], mysql_total_consumption_kwh=mysql_res[4], mysql_total_consumption_j=mysql_res[5], mysql_co2_emissions=mysql_res[6], mysql_miles_equvivalence=mysql_res[7], mysql_tv_equvivalence=mysql_res[8],
+        #                        postgresql_cpu_consumption_kwh=postgresql_res[0], postgresql_cpu_consumption_j=postgresql_res[1], postgresql_ram_consumption_kwh=postgresql_res[2], postgresql_ram_consumption_j=postgresql_res[3], postgresql_total_consumption_kwh=postgresql_res[
+        #                            4], postgresql_total_consumption_j=postgresql_res[5], postgresql_co2_emissions=postgresql_res[6], postgresql_miles_equvivalence=postgresql_res[7], postgresql_tv_equvivalence=postgresql_res[8],
+        #                        mongodb_cpu_consumption_kwh=mongodb_res[0], mongodb_cpu_consumption_j=mongodb_res[1], mongodb_ram_consumption_kwh=mongodb_res[2], mongodb_ram_consumption_j=mongodb_res[
+        #                            3], mongodb_total_consumption_kwh=mongodb_res[4], mongodb_total_consumption_j=mongodb_res[5], mongodb_co2_emissions=mongodb_res[6], mongodb_miles_equvivalence=mongodb_res[7], mongodb_tv_equvivalence=mongodb_res[8],
+        #                        couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
+        #                            4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
+        #                        efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
+        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[0], mysql_ram_consumption_j=mysql_res[1], mysql_total_consumption_j=mysql_res[2],
+                               postgresql_cpu_consumption_j=postgresql_res[0], postgresql_ram_consumption_j=postgresql_res[
+            1], postgresql_total_consumption_j=postgresql_res[2],
+            mongodb_cpu_consumption_j=mongodb_res[0], mongodb_ram_consumption_j=mongodb_res[
+            1], mongodb_total_consumption_j=mongodb_res[2],
+            couchbase_cpu_consumption_j=couchbase_res[0], couchbase_ram_consumption_j=couchbase_res[
+            1], couchbase_total_consumption_j=couchbase_res[2],
+            sorted_total=sorted_total, len=len(sorted_total))
+    else:
+        return render_template('upload.html')
 
 
 @app.route('/query_results')
@@ -651,49 +667,49 @@ def compare():
         #     couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
         #     4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
         #     efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
-        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[1], mysql_ram_consumption_j=mysql_res[3], mysql_total_consumption_j=mysql_res[5],
-                               postgresql_cpu_consumption_j=postgresql_res[1], postgresql_ram_consumption_j=postgresql_res[
-                                   3], postgresql_total_consumption_j=postgresql_res[5],
-                               mongodb_cpu_consumption_j=mongodb_res[1], mongodb_ram_consumption_j=mongodb_res[
-                                   3], mongodb_total_consumption_j=mongodb_res[5],
-                               couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_j=couchbase_res[
-                                   3], couchbase_total_consumption_j=couchbase_res[5],
+        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[0], mysql_ram_consumption_j=mysql_res[1], mysql_total_consumption_j=mysql_res[2],
+                               postgresql_cpu_consumption_j=postgresql_res[0], postgresql_ram_consumption_j=postgresql_res[
+                                   1], postgresql_total_consumption_j=postgresql_res[2],
+                               mongodb_cpu_consumption_j=mongodb_res[0], mongodb_ram_consumption_j=mongodb_res[
+                                   1], mongodb_total_consumption_j=mongodb_res[2],
+                               couchbase_cpu_consumption_j=couchbase_res[0], couchbase_ram_consumption_j=couchbase_res[
+                                   1], couchbase_total_consumption_j=couchbase_res[2],
                                sorted_total=sorted_total, len=len(sorted_total))
 
     elif request.method == 'GET':
         return render_template('choice.html')
 
 
-@app.route('/details', methods=['POST'])
-def execute_query_helper():
-    query = request.form['query']
-    if len(query) == 0:
-        not_query = 'Please enter your query.'
-        return render_template('ecodb.html', not_query=not_query)
-    elif is_sql(query):
-        lang = "SQL"
-        return render_template('sql_details.html', query=query, lang=lang)
-    elif is_nosql(query):
-        lang = "NoSQL"
-        return render_template('nosql_details.html', query=query, lang=lang)
-    else:
-        not_query = 'Please enter a valid query.'
-        return render_template('ecodb.html', not_query=not_query)
+# @app.route('/details', methods=['POST'])
+# def execute_query_helper():
+#     query = request.form['query']
+#     if len(query) == 0:
+#         not_query = 'Please enter your query.'
+#         return render_template('ecodb.html', not_query=not_query)
+#     elif is_sql(query):
+#         lang = "SQL"
+#         return render_template('sql_details.html', query=query, lang=lang)
+#     elif is_nosql(query):
+#         lang = "NoSQL"
+#         return render_template('nosql_details.html', query=query, lang=lang)
+#     else:
+#         not_query = 'Please enter a valid query.'
+#         return render_template('ecodb.html', not_query=not_query)
 
 
-@app.route('/display', methods=['POST'])
-def display1():
-    lang = request.form['lang']
-    query = request.form['query']
-    if lang == "SQL":
-        password = request.form['password']
-        db_name = request.form['db_name']
-        res = execute_mysql_query(query, 'root', password, db_name)
-    else:
-        db_name = request.form['db_name']
-        res = execute_mongodb_query(query, db_name)
+# @app.route('/display', methods=['POST'])
+# def display1():
+#     lang = request.form['lang']
+#     query = request.form['query']
+#     if lang == "SQL":
+#         password = request.form['password']
+#         db_name = request.form['db_name']
+#         res = execute_mysql_query(query, 'root', password, db_name)
+#     else:
+#         db_name = request.form['db_name']
+#         res = execute_mongodb_query(query, db_name)
 
-    return render_template('ecodb_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2], co2_emissions=res[3], mile_eqivalents=res[4], tv_minutes=res[5])
+#     return render_template('ecodb_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2], co2_emissions=res[3], mile_eqivalents=res[4], tv_minutes=res[5])
 
 
 '''
@@ -738,17 +754,17 @@ def carbon_to_tv(kg_carbon):
 '''
 
 
-def is_sql(query):
-    sql_keywords = ["SELECT", "UPDATE", "DELETE", "INSERT INTO" "FROM", "WHERE", "JOIN", "INNER JOIN",
-                    "LEFT JOIN", "RIGHT JOIN", "ON", "GROUP BY", "HAVING", "ORDER BY", "LIMIT", "DESCRIBE"]
-    for keyword in sql_keywords:
-        if re.search(r"\b" + keyword + r"\b", query.upper()):
-            return True
-        
-    query_split = query.split(' ')
-    if query_split[0] == "insert" or "INSERT":
-        return True
-    return False
+# def is_sql(query):
+#     sql_keywords = ["SELECT", "UPDATE", "DELETE", "INSERT INTO" "FROM", "WHERE", "JOIN", "INNER JOIN",
+#                     "LEFT JOIN", "RIGHT JOIN", "ON", "GROUP BY", "HAVING", "ORDER BY", "LIMIT", "DESCRIBE"]
+#     for keyword in sql_keywords:
+#         if re.search(r"\b" + keyword + r"\b", query.upper()):
+#             return True
+
+#     query_split = query.split(' ')
+#     if query_split[0] == "insert" or "INSERT":
+#         return True
+#     return False
 
 
 '''
@@ -759,16 +775,57 @@ def is_sql(query):
 '''
 
 
-def is_nosql(query):
-    nosql_keywords = ["insertOne", "insertMany", "find", "findOne",
-                      "updateOne", "updateMany", "deleteOne", "deleteMany"]
-    split_query = query.split('.')
-    idx = split_query[2].find("(")
-    key = split_query[2][:idx]
-    if split_query[0] == "db" and len(split_query) > 2:
-        if key in nosql_keywords:
-            return True
-    return False
+# def is_nosql(query):
+#     nosql_keywords = ["insertOne", "insertMany", "find", "findOne",
+#                       "updateOne", "updateMany", "deleteOne", "deleteMany"]
+#     split_query = query.split('.')
+#     idx = split_query[2].find("(")
+#     key = split_query[2][:idx]
+#     if split_query[0] == "db" and len(split_query) > 2:
+#         if key in nosql_keywords:
+#             return True
+#     return False
+
+
+# -----------------------------------------
+# Functions and routes to execute a single query
+# -----------------------------------------
+@app.route('/get_single_query_details', methods=['POST'])
+def get_single_query_details():
+    selected_option = request.form.get('database_type')
+
+    username = ""
+    password = ""
+
+    if selected_option == 'mongodb':
+        database_name = request.form['database_name']
+        query = request.form['query']
+        print(selected_option)
+        res = execute_mongodb_query(query, database_name)
+    elif selected_option == 'mysql':
+        username = request.form['username']
+        password = request.form['password']
+        database_name = request.form['database_name']
+        query = request.form['query']
+        print(selected_option)
+        res = execute_mysql_query(query, username, password, database_name)
+    elif selected_option == 'postgresql':
+        username = request.form['username']
+        password = request.form['password']
+        database_name = request.form['database_name']
+        query = request.form['query']
+        print(selected_option)
+        res = execute_postgreSQL_query(
+            query, username, password, database_name)
+    elif selected_option == 'couchbase':
+        username = request.form['username']
+        password = request.form['password']
+        database_name = request.form['database_name']
+        query = request.form['query']
+        print(selected_option)
+        res = execute_couchbase_query(query, username, password, database_name)
+
+    return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2], co2_emissions=res[3], mile_eqivalents=res[4], tv_minutes=res[5])
 
 
 '''
@@ -802,11 +859,8 @@ def execute_mysql_query(query, db_user, db_password, db_name):
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
-    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
@@ -834,11 +888,8 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
-    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
@@ -857,13 +908,47 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
 
     # get a reference to the default collection
     cb_coll = cb.default_collection()
+    key_start = couchbase_query.find('VALUES("') + len('VALUES("')
+    key_end = couchbase_query.find('",', key_start)
+    key = couchbase_query[key_start:key_end]
+
+    start_index = couchbase_query.find("{")
+    end_index = couchbase_query.rfind("}")
+    data = couchbase_query[start_index:end_index + 1]
+
+    if "INSERT INTO" in couchbase_query and "VALUES" in couchbase_query:
+
+        # Check if the key already exists in the Couchbase bucket
+        try:
+            # Check if the key already exists in the Couchbase bucket
+            if cb_coll.get(key).success:
+                print(f"Key '{key}' already exists. Modifying key...")
+                key = generate_unique_key()
+        except DocumentNotFoundException:
+            print(
+                f"Key '{key}' does not exist in the Couchbase bucket. Creating a new document with this key.")
+            pass
+        print(key)
+        # Modify the user's query to include the modified key
+        pattern = r'VALUES\(".*?",\{(.+?)\}\);'
+
+        # Use re.sub with the IGNORECASE flag to replace the matched content with the replacement value
+        couchbase_query = re.sub(
+            pattern, f'VALUES("{key}",{{\\1}});', couchbase_query, flags=re.IGNORECASE)
+
+        print(couchbase_query)
 
     obj = Tracker()
     # Tracker object starts to calculate the cpu,ram consumptions
     obj.start()
     res = []
-
-    query_res = cluster.query(couchbase_query)
+    if "INSERT INTO" in couchbase_query:
+        document = json.loads(data)
+        cb_coll.upsert(key, document)
+    else:
+        result = cluster.query(couchbase_query)
+        # for row in result:
+        #     print(row)
     # for row in query_res:
     #     print(f'Found row: {row}')
     # Tracker object stops
@@ -871,11 +956,8 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
-    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(
@@ -1005,11 +1087,8 @@ def execute_mongodb_query(query, db_name):
 
     # store the cpu and ram consumptions,CO2 emissions
     res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.cpu_consumption()*36000000))
     res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()*36000000))
     res.append("{:.2e}".format(obj.consumption()))
-    res.append("{:.2e}".format(obj.consumption()*36000000))
     CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
     res.append("{:.2e}".format(float(CO2_emissions)))
     res.append(carbon_to_miles(

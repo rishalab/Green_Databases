@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <title>EcoDB</title>
+    <title>DBJoules</title>
     <link rel="stylesheet" href="../static/enter_queries.css">
 </head>
 
@@ -20,13 +20,16 @@
                     
                     <div class="leftside d-flex align-items-center justify-content-center">
                         <div class="comp-card">
+                            <header class="home-header" style="color: #00ced1;">
+                                <h2>SQL Details</h2>
+                            </header>
                             <div class="sql">
                                 <div class="comp-wrapper">
                                     <header style="color: #00ced1;">
                                         <h4 class="headings">MySQL Query</h4>
                                     </header>
                                     <textarea spellcheck="false" name="mysql_query" id="mysql_query"
-                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off"></textarea>
+                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off" required></textarea>
                                 </div>
                                 
                                 <div class="comp-wrapper">
@@ -34,7 +37,7 @@
                                         <h4 class="headings">PostgreSQL Query</h4>
                                     </header>
                                     <textarea spellcheck="false" name="postgresql_query" id="postgresql_query"
-                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off"></textarea>
+                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off" required></textarea>
                                 </div>
                                 
                             </div>
@@ -48,6 +51,9 @@
                 <div class="col-md-6 no-gutters">
                     <div class="rightside d-flex align-items-center justify-content-center">
                         <div class="comp-card">
+                            <header class="home-header">
+                                <h2>NoSQL Details</h2>
+                            </header>
                             <div class="no-sql">
                                 
                                 <div class="comp-wrapper">
@@ -55,7 +61,7 @@
                                         <h4 class="headings">MongoDB Query</h4>
                                     </header>
                                     <textarea spellcheck="false" name="mongodb_query" id="mongodb_query"
-                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off"></textarea>
+                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off" required></textarea>
                                 </div>
                                 
                                 <div class="comp-wrapper">
@@ -63,7 +69,7 @@
                                         <h4 class="headings">Couchbase Query</h4>
                                     </header>
                                     <textarea spellcheck="false" name="couchbase_query" id="couchbase_query"
-                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off"></textarea>
+                                        placeholder="Enter the Query" rows="10" cols="50" autocomplete="off" required></textarea>
                                 </div>
                                 
 
@@ -77,15 +83,29 @@
                 </div>
                 <div class="col-4"></div>
                 <div class="col-3">
-                    <input class="btn  btn-block result-btn" type="submit" value="Results">
+                    <div id="loading" style="display: none;" class="loading">
+                        <h2 style="color: white;" id="loading-text">Loading...</h2>
+                    </div>
+                    <input id="results-button" class="btn  result-btn" type="submit" value="Results">
                 </div>
                 <div class="col-4"></div>
 
 
             </div>
         </form>
+        <form method="GET" action="{{ url_for('enter_queries') }}">
+            <button class="btn  back-btn" onclick="window.location.href='{{ url_for('upload')}}'">Go back</button>
+        </form>
     </div>
+    <script>
+        document.getElementById('results-button').onclick = function () {
+            document.getElementById('loading').style.display = 'block';
+        }
 
+        window.onload = function () {
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
 </body>
 
 </html>

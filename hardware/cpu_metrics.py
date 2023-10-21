@@ -12,39 +12,44 @@ from pkg_resources import resource_stream
 
 
 CONSTANT_CONSUMPTION = 100.1
-FROM_WATTs_TO_kWATTh = 1000*3600
+# FROM_WATTs_TO_kWATTh = 1000*3600
 NUM_CALCULATION = 200
 # CPU_TABLE_NAME = "../data/gpu.csv"
 
+
 class NoCPUinTableWarning(Warning):
     pass
+
 
 class NoNeededLibrary(Warning):
     pass
 
 # This class is the interface for tracking CPU power consumption.
+
+
 class CPU():
     def __init__(self, cpu_processes="current", ignore_warnings=False):
-        self._ignore_warnings = ignore_warnings  
+        self._ignore_warnings = ignore_warnings
         self._cpu_processes = cpu_processes         # get no of cpu processes
         self._cpu_dict = get_cpu_info()             # cpu info function
         self._name = self._cpu_dict["brand_raw"]    # get cpu name
-        self._tdp = find_tdp_value(self._name, "cpu_power.csv", self._ignore_warnings)  # find tdp
+        self._tdp = find_tdp_value(
+            self._name, "cpu_power.csv", self._ignore_warnings)  # find tdp
         self._consumption = 0                                # cpu consumption
-        self._cpu_num = number_of_cpu(self._ignore_warnings) # user defined function
+        self._cpu_num = number_of_cpu(
+            self._ignore_warnings)  # user defined function
         self._start = time.time()                            # calculation start time
         self._operating_system = platform.system()           # get os name
-
 
     def tdp(self):          # get tdp
         return self._tdp
 
     def name(self,):      # get cpu name
-        return self._name 
+        return self._name
 
-    def cpu_num(self,):     # get number of cpus 
+    def cpu_num(self,):     # get number of cpus
         return self._cpu_num
-    
+
     def set_consumption_zero(self):
         self._consumption = 0
 
@@ -62,14 +67,17 @@ class CPU():
         cpu_percent = os_dict[self._operating_system](self._cpu_processes)
         return cpu_percent
 
-    def calculate_consumption(self):# float value - calculates CPU power consumption.
+    # float value - calculates CPU power consumption.
+    def calculate_consumption(self):
         time_period = time.time() - self._start
         self._start = time.time()
-        consumption = self._tdp * self.get_cpu_percent() * self._cpu_num * time_period / FROM_WATTs_TO_kWATTh
+        # consumption = self._tdp * self.get_cpu_percent() * self._cpu_num * time_period / FROM_WATTs_TO_kWATTh
+        consumption = self._tdp * self.get_cpu_percent() * self._cpu_num * time_period
         if consumption < 0:
             consumption = 0
         self._consumption += consumption
         return consumption
+
 
 """
     This function prints all seeable CPU devices
@@ -84,7 +92,9 @@ class CPU():
     No returns
 
 """
-def all_available_cpu(): #This function prints all seeable CPU devices
+
+
+def all_available_cpu():  # This function prints all seeable CPU devices
     try:
         cpu_dict = get_cpu_info()
         string = f"""Seeable cpu device(s):
@@ -92,7 +102,6 @@ def all_available_cpu(): #This function prints all seeable CPU devices
         print(string)
     except:
         print("There is no any available cpu device(s)")
-
 
 
 """
@@ -108,6 +117,8 @@ def all_available_cpu(): #This function prints all seeable CPU devices
      Number of CPU sockets(physical CPU processors)
 
 """
+
+
 def number_of_cpu(ignore_warnings=True):
     operating_system = platform.system()
     cpu_num = None
@@ -124,13 +135,14 @@ def number_of_cpu(ignore_warnings=True):
                 tmp = i.split(':')
                 if len(tmp) == 2:
                     dictionary[tmp[0]] = tmp[1]
-            cpu_num = min(int(dictionary["Socket(s)"]), int(dictionary["NUMA node(s)"]))
+            cpu_num = min(int(dictionary["Socket(s)"]), int(
+                dictionary["NUMA node(s)"]))
         except:
             if not ignore_warnings:
                 warnings.warn(
-                    message="\nYou probably should have installed 'util-linux' to deretmine cpu number correctly\nFor now, number of cpu devices is set to 1\n\n", 
+                    message="\nYou probably should have installed 'util-linux' to deretmine cpu number correctly\nFor now, number of cpu devices is set to 1\n\n",
                     category=NoNeededLibrary
-                    )
+                )
             cpu_num = 1
     elif operating_system == "Windows":
         try:
@@ -150,9 +162,10 @@ def number_of_cpu(ignore_warnings=True):
             cpu_num = int(re.findall('- (\d)\.', processor_string)[0])
         except:
             cpu_num = 1
-    else: 
+    else:
         cpu_num = 1
     return cpu_num
+
 
 '''
 drops all the waste tokens and patterns
@@ -166,9 +179,12 @@ Returns
 cpu_name: str
 
 '''
+
+
 def transform_cpu_name(cpu_name):
     # dropping all the waste tokens and patterns:
-    cpu_name = re.sub('(\(R\))|(®)|(™)|(\(TM\))|(@.*)|(\S*GHz\S*)|(\[.*\])|( \d-Core)|(\(.*\))', '', cpu_name)
+    cpu_name = re.sub(
+        '(\(R\))|(®)|(™)|(\(TM\))|(@.*)|(\S*GHz\S*)|(\[.*\])|( \d-Core)|(\(.*\))', '', cpu_name)
 
     # dropping all the waste words:
     array = re.split(" ", cpu_name)
@@ -178,9 +194,9 @@ def transform_cpu_name(cpu_name):
     cpu_name = " ".join(array)
     patterns = re.findall("(\S*\d+\S*)", cpu_name)
     for i in re.findall(
-        "(Ryzen Threadripper)|(Ryzen)|(EPYC)|(Athlon)|(Xeon Gold)|(Xeon Bronze)|(Xeon Silver)|(Xeon Platinum)|(Xeon)|(Core)|(Celeron)|(Atom)|(Pentium)", 
+        "(Ryzen Threadripper)|(Ryzen)|(EPYC)|(Athlon)|(Xeon Gold)|(Xeon Bronze)|(Xeon Silver)|(Xeon Platinum)|(Xeon)|(Core)|(Celeron)|(Atom)|(Pentium)",
         cpu_name
-        ):
+    ):
         patterns += i
     patterns = list(set(patterns))
     if '' in patterns:
@@ -193,7 +209,7 @@ def get_patterns(cpu_name):  # find patterns
     for i in re.findall(
         "(Ryzen Threadripper)|(Ryzen)|(EPYC)|(Athlon)|(Xeon Gold)|(Xeon Bronze)|(Xeon Silver)|(Xeon Platinum)|(Xeon)|(Core)|(Celeron)|(Atom)|(Pentium)",
         cpu_name
-        ):
+    ):
         patterns += i
     patterns = list(set(patterns))
     if '' in patterns:
@@ -228,9 +244,9 @@ def find_tdp_value(cpu_name, f_table_name, constant_value=CONSTANT_CONSUMPTION, 
     if len(patterns) == 0:
         if not ignore_warnings:
             warnings.warn(
-                message="\n\nYour CPU device is not found in our database\nCPU TDP is set to constant value 100\n", 
+                message="\n\nYour CPU device is not found in our database\nCPU TDP is set to constant value 100\n",
                 category=NoCPUinTableWarning
-                )
+            )
         return constant_value
     # appending to array all suitable for at least one of the patterns elements
     suitable_elements = []
@@ -252,9 +268,9 @@ def find_tdp_value(cpu_name, f_table_name, constant_value=CONSTANT_CONSUMPTION, 
     if len(suitable_elements) == 0:
         if not ignore_warnings:
             warnings.warn(
-                message="\n\nYour CPU device is not found in our database\nCPU TDP is set to constant value 100\n", 
+                message="\n\nYour CPU device is not found in our database\nCPU TDP is set to constant value 100\n",
                 category=NoCPUinTableWarning
-                )
+            )
         return CONSTANT_CONSUMPTION
     elif len(suitable_elements) == 1:
         return float(suitable_elements[0][0][1])
@@ -269,14 +285,13 @@ def find_tdp_value(cpu_name, f_table_name, constant_value=CONSTANT_CONSUMPTION, 
         return find_max_tdp(tmp_elements)
 
 
-
 # function to get cpu percent for windows
 def get_cpu_percent_windows(cpu_processes="current"):
     cpu_percent = 0
     if cpu_processes == "current":
         current_pid = os.getpid()
         sum_all = 0
-        #Iterate over the all running processes
+        # Iterate over the all running processes
         for proc in psutil.process_iter():
             try:
                 pinfo = proc.as_dict(attrs=['name', 'cpu_percent', 'pid'])
@@ -285,7 +300,7 @@ def get_cpu_percent_windows(cpu_processes="current"):
                     sum_all += pinfo['cpu_percent']
                     if pinfo['pid'] == current_pid:
                         cpu_percent = pinfo['cpu_percent']
-            except (psutil.NoSuchProcess, psutil.AccessDenied , psutil.ZombieProcess) :
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
         if sum_all != 0:
             cpu_percent /= sum_all
@@ -294,5 +309,3 @@ def get_cpu_percent_windows(cpu_processes="current"):
     elif cpu_processes == "all":
         cpu_percent = psutil.cpu_percent()/100
     return cpu_percent
-
-

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <title>EcoDB</title>
+    <title>DBJoules</title>
     <link rel="stylesheet" href="../static/comparision.css">
 </head>
 <body>
@@ -135,9 +135,13 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="col-4"></div>
                 <div class="col-3">
-                    <input class="btn result-btn" type="submit" value="Results">
+                    <div id="loading" style="display: none;" class="loading">
+                        <h2 style="color: white;" id="loading-text">Loading...</h2>
+                    </div>
+                    <input id="results-button" class="btn result-btn" type="submit" value="Results">
                 </div>
                 <div class="col-4"></div>
 
@@ -148,6 +152,14 @@
             <button class="btn  back-btn" onclick="window.location.href='{{ url_for('choice')}}'">Go back</button>
         </form>
     </div>
+    <script>
+        document.getElementById('results-button').onclick = function () {
+                document.getElementById('loading').style.display = 'block';
+            }
 
+            window.onload = function () {
+                document.getElementById('loading').style.display = 'none';
+            }
+    </script>
 </body>
 </html>

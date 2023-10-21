@@ -118,6 +118,7 @@ th {
   background-color: #0f9ea5;
   font-size: 1.3rem;
   font-weight: 500;
+  cursor: pointer;
 }
 
 .bottom-row{

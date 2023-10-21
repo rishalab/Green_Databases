@@ -6,9 +6,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
     integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	<title>EcoDB</title>
-	<link rel="stylesheet" href="../static/ecodb_result.css">
-	<link rel="stylesheet" href="../static/ecodb.css">
+	<title>DBJoules</title>
+	<link rel="stylesheet" href="../static/dbJoules_result.css">
 </head>
 <body>
 	<div class="container-xxl">
@@ -20,21 +19,21 @@
 							<thead>
 								<tr>
 									<th>Resource Consumption Metrics</th>
-									<th>Results</th>
+									<th>Results in Joules</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr>
 									<td>CPU Consumption</td>
-									<td>{{ cpu_consumption }} kWh</td>
+									<td>{{ cpu_consumption }} J</td>
 								</tr>
 								<tr>
 									<td>RAM Consumption</td>
-									<td>{{ ram_consumption }} kWh</td>
+									<td>{{ ram_consumption }} J</td>
 								</tr>
 								<tr>
 									<td>Total Consumption</td>
-									<td>{{ total_consumption }} kWh</td>
+									<td>{{ total_consumption }} J</td>
 								</tr>
 								<tr>
 									<td>CO2 Emissions</td>
@@ -43,7 +42,9 @@
 							</tbody>
 						</table>
 					</div>
+					<button class="btn back-btn" onclick="window.location.href='{{ url_for('index')}}'">Go home</button>
 				</div>
+				
 			</div>
 			<div class="col-md-4 no-gutters">
 				<div class="rightside d-flex align-items-center justify-content-center">
@@ -74,9 +75,9 @@
 					
 				</div>
 			</div>
-		</div>
+			</div>
 	</div>
 
-	<button class="home-btn" onclick="window.location.href='{{ url_for('index')}}'">Go home</button>
+	
 </body>
 </html>

@@ -87,6 +87,17 @@ textarea::-webkit-scrollbar {
     position: relative;
 }
 
+.loading{
+    position: absolute;
+        bottom: 1rem;
+        left: 53%;
+        /* height: 45px; */
+        transform: translateY(-200%);
+        /* background-color: #0f9ea5; */
+        font-size: 1.3rem;
+        font-weight: 500;
+}
+
 
 .headings {
     font-size: 1.3rem;

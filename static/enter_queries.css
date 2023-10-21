@@ -70,6 +70,7 @@ textarea::-webkit-scrollbar {
     position: absolute;
     bottom: 1rem;
     left: 200%;
+    width: 50%;
     height: 50px;
     transform: translateX(-50%);
     background-color: #0f9ea5;
@@ -84,6 +85,28 @@ textarea::-webkit-scrollbar {
     position: relative;
 }
 
+.back-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 5%;
+    width: 7%;
+    height: 7%;
+    transform: translateX(-50%);
+    background-color: #0f9ea5;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.loading {
+    position: absolute;
+    bottom: 1rem;
+    left: 187%;
+    /* height: 45px; */
+    transform: translateY(-200%);
+    /* background-color: #0f9ea5; */
+    font-size: 1.3rem;
+    font-weight: 500;
+}
 
 .headings {
     font-size: 1.3rem;
