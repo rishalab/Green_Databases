@@ -19,6 +19,7 @@ import psycopg2
 import uuid
 import couchbase
 import itertools
+from itertools import product
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions, QueryOptions
@@ -146,13 +147,99 @@ def submit_columns():
     return render_template('primary_key.html', items=column_names)
 
 
-@app.route('/query-details', methods=['POST'])
+@app.route('/database_choice_details', methods=['POST'])
 def prim_key():
     column_names = session.get('column_names', None)
     primary_key = request.form.get('primary_key')
     primary_key = primary_key.replace(" ", "_")
     session['primary_key'] = primary_key
-    return render_template('input.html')
+    return render_template('database_choice.html')
+
+
+@app.route('/database_choice_create_table', methods=['POST'])
+def database_choice_details():
+    databases = request.form.getlist('databases')
+    session['databases'] = databases
+    # print(databases)
+    return render_template('database_choice_details.html', databases=databases)
+
+
+@app.route('/output_choice', methods=['POST'])
+def database_choice_get_queries():
+    databases = session.get('databases', None)
+    database_info = {}  # to store the information
+
+    for database in databases:
+        info = {}
+        if database != 'MongoDB':
+            info['user'] = request.form.get(f'{database}_user')
+            info['password'] = request.form.get(f'{database}_password')
+        info['name'] = request.form.get(f'{database}_name')
+
+        database_info[database] = info
+    session['database_info'] = database_info
+    # print(database_info)
+    table_name = session.get('table_name', None)
+    results = {}
+    for database, info in database_info.items():
+        if database == 'MySQL':
+            results['MySQL'] = create_mysql_table(
+                info['user'], info['password'], info['name'])
+        elif database == 'PostgreSQL':
+            results['PostgreSQL'] = create_postgresql_table(
+                info['user'], info['password'], info['name'])
+        elif database == 'MongoDB':
+            results['MongoDB'] = create_mongodb_collection(info['name'])
+        elif database == 'Couchbase':
+            results['Couchbase'] = create_couchbase_collection(
+                info['user'], info['password'])
+    r = False
+    for database in databases:
+        if results[database] == 'success':
+            r = True
+    if r == True:
+        return render_template('csv_choice.html', table_name=table_name)
+    else:
+        return "Unsuccessfull!"
+
+
+@app.route('/results', methods=['POST'])
+def database_choice_queries():
+    databases = session.get('databases', None)
+    database_info = session.get('database_info', None)
+    queries = []
+    for database in databases:
+        textarea = request.form.get(database)
+        queries.append(textarea)
+    session['queries'] = queries
+    # print(databases)
+    # print(queries)
+    query_results = {}
+    for i in range(0, len(databases)):
+        if databases[i] == 'MySQL':
+            query_results['MySQL'] = execute_mysql_query(
+                queries[i], database_info['MySQL']['user'], database_info['MySQL']['password'], database_info['MySQL']['name'])
+            # print('mysql')
+            time.sleep(1)
+        elif databases[i] == 'PostgreSQL':
+            query_results['PostgreSQL'] = execute_postgreSQL_query(
+                queries[i], database_info['PostgreSQL']['user'], database_info['PostgreSQL']['password'], database_info['PostgreSQL']['name'])
+            # print('postgres')
+            time.sleep(1)
+        elif databases[i] == 'MongoDB':
+            query_results['MongoDB'] = execute_mongodb_query(
+                queries[i], database_info['MongoDB']['name'])
+            # print('mongo')
+            time.sleep(1)
+        elif databases[i] == 'Couchbase':
+            query_results['Couchbase'] = execute_couchbase_query(
+                queries[i], database_info['Couchbase']['user'], database_info['Couchbase']['password'], database_info['Couchbase']['name'])
+            # print('couch')
+            time.sleep(1)
+    # print(query_results)
+    sorted_data = {k: v for k, v in sorted(
+        query_results.items(), key=lambda item: float(item[1][2]))}
+    return render_template('result.html', data=query_results, sorted_data=sorted_data)
 
 
 @app.route('/choice')
@@ -162,12 +249,65 @@ def choice():
 
 @app.route('/input-queries')
 def queries():
-    return render_template('enter_queries.html')
+    databases = session.get('databases', None)
+    return render_template('database_choice_queries.html', databases=databases)
 
 
-@app.route('/comparision')
-def comparision():
-    return render_template('comparision.html')
+@app.route('/existing_database_choice')
+def existing_database_choice():
+    return render_template('existing_database_choice.html')
+
+
+@app.route('/existing_database_details', methods=['POST'])
+def existing_database_databases():
+    databases = request.form.getlist('databases')
+    session['databases'] = databases
+    # print(databases)
+    return render_template('existing_database_details.html', databases=databases)
+
+
+@app.route('/existing_database', methods=['POST'])
+def existing_database_details():
+    databases = session.get('databases', None)
+    database_info = {}  # to store the information
+
+    for database in databases:
+        info = {}
+        if database != 'MongoDB':
+            info['user'] = request.form.get(f'{database}_user')
+            info['password'] = request.form.get(f'{database}_password')
+        info['name'] = request.form.get(f'{database}_name')
+        info['query'] = request.form.get(f'{database}_query')
+
+        database_info[database] = info
+    session['database_info'] = database_info
+    # print(database_info)
+    query_results = {}
+    for i in range(0, len(databases)):
+        if databases[i] == 'MySQL':
+            query_results['MySQL'] = execute_mysql_query(
+                database_info['MySQL']['query'], database_info['MySQL']['user'], database_info['MySQL']['password'], database_info['MySQL']['name'])
+            # print('mysql')
+            time.sleep(1)
+        elif databases[i] == 'PostgreSQL':
+            query_results['PostgreSQL'] = execute_postgreSQL_query(
+                database_info['PostgreSQL']['query'], database_info['PostgreSQL']['user'], database_info['PostgreSQL']['password'], database_info['PostgreSQL']['name'])
+            # print('postgres')
+            time.sleep(1)
+        elif databases[i] == 'MongoDB':
+            query_results['MongoDB'] = execute_mongodb_query(
+                database_info['MongoDB']['query'], database_info['MongoDB']['name'])
+            # print('mongo')
+            time.sleep(1)
+        elif databases[i] == 'Couchbase':
+            query_results['Couchbase'] = execute_couchbase_query(
+                database_info['Couchbase']['query'], database_info['Couchbase']['user'], database_info['Couchbase']['password'], database_info['Couchbase']['name'])
+            # print('couch')
+            time.sleep(1)
+    # print(query_results)
+    sorted_data = {k: v for k, v in sorted(
+        query_results.items(), key=lambda item: float(item[1][2]))}
+    return render_template('result.html', data=query_results, sorted_data=sorted_data)
 
 
 def allowed_file(filename):
@@ -226,8 +366,8 @@ def create_mysql_table(user, password, database):
     # Remove the trailing comma and space
     create_query = create_query[:-2]
 
-    if primary_key:
-        create_query += f', PRIMARY KEY ({primary_key})'
+    # if primary_key:
+    #     create_query += f', PRIMARY KEY ({primary_key})'
 
     create_query += ');'
     path = 'uploads\\' + filename
@@ -426,50 +566,73 @@ def create_couchbase_collection(user, password):
 
 @app.route('/generate_csv')
 def generate_csv():
-    mysql_username = session.get('mysql_username', None)
-    mysql_db_name = session.get('mysql_db_name', None)
-    mysql_password = session.get('mysql_password', None)
+    database_info = session.get('database_info')
 
-    mongodb_db_name = session.get('mongodb_db_name', None)
+    file_name = f"DBJoules_output.csv"
 
-    postgresql_username = session.get('postgresql_username', None)
-    postgresql_db_name = session.get('postgresql_db_name', None)
-    postgresql_password = session.get('postgresql_password', None)
-
-    couchbase_username = session.get('couchbase_username', None)
-    couchbase_password = session.get('couchbase_password', None)
-    couchbase_bucket_name = session.get('table_name', None)
-
-    filename = session.get('filename', None)
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    file_name = f"{timestamp}_{filename}.csv"
+    fieldNames = []
+    for key, value in database_info.items():
+        fieldNames.append(key+" Query")
+        fieldNames.append('CPU consumption')
+        fieldNames.append('RAM consumption')
+        fieldNames.append('Total consumption')
+    data = {}
+    for key, value in database_info.items():
+        if key == 'MySQL':
+            data['MySQL'] = mysql_queries
+        elif key == 'PostgrSQL':
+            data['PostgrSQL'] = postgresql_queries
+        elif key == 'MongoDB':
+            data['MongoDB'] = mongodb_queries
+        elif key == 'Couchbase':
+            data['Couchbase'] = couchbase_queries
+    action_functions = {
+        'MySQL': execute_mysql_query,
+        'PostgrSQL': execute_postgreSQL_query,
+        'MongoDB': execute_mongodb_query,
+        'Couchbase': execute_couchbase_query,
+    }
+    database_keys = list(data.keys())
+    combinations = product(*[data[key] for key in database_keys])
+    outputs = {}
+    for key in database_keys:
+        outputs[key] = []
+    count = 0
+    for combo in combinations:
+        for key, action in zip(database_keys, combo):
+            if key in action_functions:
+                if key != 'MongoDB':
+                    action_function = action_functions[key]
+                    l = []
+                    l.append(action)
+                    x = action_function(
+                        action, database_info[key]['user'], database_info[key]['password'], database_info[key]['name'])
+                    l.extend(x)
+                    outputs[key].append(l)
+                    time.sleep(1)
+                elif key == 'MongoDB':
+                    action_function = action_functions[key]
+                    l = []
+                    l.append(action)
+                    x = action_function(
+                        action, database_info[key]['name'])
+                    l.extend(x)
+                    outputs[key].append(l)
+                    time.sleep(1)
+        count = count+1
+    csv_data = []
+    csv_data.append(fieldNames)
+    headers = list(outputs.keys())
+    for i in range(0, len(outputs[headers[0]])):
+        data_row = []
+        for db in headers:
+            data_row.append(outputs[db][i])
+        csv_data.append(data_row)
     path = 'results/' + file_name
-    with open(path, 'w', newline='') as csvfile:
-        fieldNames = ['MySQL query', 'Postgresql query', 'Mongodb query',
-                      'Couchbase query', 'mysql_CPU(J)', 'mysql_RAM(J)', 'mysql_Total(J)', 'postgresql_CPU(J)', 'postgresql_RAM(J)', 'postgresql_Total(J)', 'mongodb_CPU(J)', 'mongodb_RAM(J)', 'mongodb_Total(J)', 'couchbase_CPU(J)', 'couchbase_RAM(J)', 'couchbase_Total(J)']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
-        writer.writeheader()
-
-        combinations = itertools.product(
-            mysql_queries, postgresql_queries, mongodb_queries, couchbase_queries)
-
-        for a, b, c, d in combinations:
-            time.sleep(1)
-            mysql_res = execute_mysql_query(
-                a, mysql_username, mysql_password, mysql_db_name)
-            time.sleep(1)
-            postgresql_res = execute_postgreSQL_query(
-                b, postgresql_username, postgresql_password, postgresql_db_name)
-            time.sleep(1)
-            mongodb_res = execute_mongodb_query(c, mongodb_db_name)
-            time.sleep(1)
-            couchbase_res = execute_couchbase_query(
-                d, couchbase_username, couchbase_password, couchbase_bucket_name)
-            time.sleep(1)
-
-            writer.writerow({'MySQL query': a, 'Postgresql query': b, 'Mongodb query': c,
-                             'Couchbase query': d, 'mysql_CPU(J)': mysql_res[0], 'mysql_RAM(J)': mysql_res[1], 'mysql_Total(J)': mysql_res[2], 'postgresql_CPU(J)': postgresql_res[0], 'postgresql_RAM(J)': postgresql_res[1], 'postgresql_Total(J)': postgresql_res[2], 'mongodb_CPU(J)': mongodb_res[0], 'mongodb_RAM(J)': mongodb_res[1], 'mongodb_Total(J)': mongodb_res[2], 'couchbase_CPU(J)': couchbase_res[0], 'couchbase_RAM(J)': couchbase_res[1], 'couchbase_Total(J)': couchbase_res[2]})
-    return 'CSV file generated successfully'
+    with open(path, 'w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerows(csv_data)
+    return outputs
 
 
 @app.route('/enter_queries', methods=['POST', 'GET'])
@@ -825,7 +988,7 @@ def get_single_query_details():
         print(selected_option)
         res = execute_couchbase_query(query, username, password, database_name)
 
-    return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2], co2_emissions=res[3], mile_eqivalents=res[4], tv_minutes=res[5])
+    return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2])
 
 
 '''

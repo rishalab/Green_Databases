@@ -19,10 +19,11 @@
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" style="padding: 20px;">
         <header class="home-header" style="color: #00ced1; align-items: center; justify-content: center; display: flex;">
             <h3>Please Enter the respective datatypes for each column</h3>
         </header>
+        
         <form method="POST" action="{{ url_for('submit_columns') }}">
                 {% for item in items %}
                 <div class="col-12">
