@@ -94,3 +94,7 @@ textarea::-webkit-scrollbar {
     caret-color: #4671ea;
     border: 1px solid #bfbfbf;
 }
+
+.error{
+    color: red;
+}

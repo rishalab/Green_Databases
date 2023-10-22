@@ -10,74 +10,33 @@
 	<link rel="stylesheet" href="../static/dbJoules_result.css">
 </head>
 <body>
-	<div class="container-xxl">
-		<div class="row no-gutters">
-			<div class="col-md-8 no-gutters">
-				<div class="leftside d-flex align-items-center justify-content-center">
-					<div class="result-card">
-						<table class="rwd-table">
-							<thead>
-								<tr>
-									<th>Resource Consumption Metrics</th>
-									<th>Results in Joules</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td>CPU Consumption</td>
-									<td>{{ cpu_consumption }} J</td>
-								</tr>
-								<tr>
-									<td>RAM Consumption</td>
-									<td>{{ ram_consumption }} J</td>
-								</tr>
-								<tr>
-									<td>Total Consumption</td>
-									<td>{{ total_consumption }} J</td>
-								</tr>
-								<tr>
-									<td>CO2 Emissions</td>
-									<td>{{ co2_emissions }} kg CO2</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<button class="btn back-btn" onclick="window.location.href='{{ url_for('index')}}'">Go home</button>
-				</div>
-				
-			</div>
-			<div class="col-md-4 no-gutters">
-				<div class="rightside d-flex align-items-center justify-content-center">
-					<div class="result-card">
-						<header class="result-header">
-							<h2>Real World Equivalents</h2>
-						</header>
-						<header class="result-header">
-							<br>
-							<div class="equi">
-								<p>Miles Equivalence</p>
-								<img src="../static/mileage.png" alt="mile">
-								<br>
-								<br>
-								<p>{{ mile_eqivalents }} miles</p>
-							</div>
-							<br>
-							<div class="equi">
-								<p>TV Watch Time</p>
-								<img src="../static/watching-tv.png" alt="tv">
-								<br>
-								<br>
-								<p>{{ tv_minutes }} minutes</p>
-							</div>
-							
-						</header>
-					</div>
-					
-				</div>
-			</div>
-			</div>
+	<div class="result-heading">
+		<h2>Energy Consumption Results</h2>
 	</div>
-
-	
+	<button class="btn back-btn" onclick="window.location.href='{{ url_for('index')}}'">Go home</button>
+	<div class="result-card">
+		<table class="rwd-table">
+			<thead>
+				<tr>
+					<th>Resource Consumption Metrics</th>
+					<th>Results in Joules</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>CPU Consumption</td>
+					<td>{{ cpu_consumption }} J</td>
+				</tr>
+				<tr>
+					<td>RAM Consumption</td>
+					<td>{{ ram_consumption }} J</td>
+				</tr>
+				<tr>
+					<td>Total Consumption</td>
+					<td>{{ total_consumption }} J</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
 </body>
 </html>

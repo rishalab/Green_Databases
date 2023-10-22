@@ -682,10 +682,10 @@ def enter_queries():
         databases1.append("Mongodb")
         databases1.append("Couchbase")
         eff_total_consumption = []
-        eff_total_consumption.append(mysql_res[4])
-        eff_total_consumption.append(postgresql_res[4])
-        eff_total_consumption.append(mongodb_res[4])
-        eff_total_consumption.append(couchbase_res[4])
+        eff_total_consumption.append(mysql_res[2])
+        eff_total_consumption.append(postgresql_res[2])
+        eff_total_consumption.append(mongodb_res[2])
+        eff_total_consumption.append(couchbase_res[2])
 
         # eff_co2_emissions = []
         # eff_co2_emissions.append(mysql_res[6])
@@ -788,10 +788,10 @@ def compare():
         databases1.append("Mongodb")
         databases1.append("Couchbase")
         eff_total_consumption = []
-        eff_total_consumption.append(mysql_res[4])
-        eff_total_consumption.append(postgresql_res[4])
-        eff_total_consumption.append(mongodb_res[4])
-        eff_total_consumption.append(couchbase_res[4])
+        eff_total_consumption.append(mysql_res[2])
+        eff_total_consumption.append(postgresql_res[2])
+        eff_total_consumption.append(mongodb_res[2])
+        eff_total_consumption.append(couchbase_res[2])
 
         # eff_co2_emissions = []
         # eff_co2_emissions.append(mysql_res[6])
@@ -955,40 +955,46 @@ def carbon_to_tv(kg_carbon):
 # -----------------------------------------
 @app.route('/get_single_query_details', methods=['POST'])
 def get_single_query_details():
-    selected_option = request.form.get('database_type')
+    try:
+        selected_option = request.form.get('database_type')
 
-    username = ""
-    password = ""
+        username = ""
+        password = ""
 
-    if selected_option == 'mongodb':
-        database_name = request.form['database_name']
-        query = request.form['query']
-        print(selected_option)
-        res = execute_mongodb_query(query, database_name)
-    elif selected_option == 'mysql':
-        username = request.form['username']
-        password = request.form['password']
-        database_name = request.form['database_name']
-        query = request.form['query']
-        print(selected_option)
-        res = execute_mysql_query(query, username, password, database_name)
-    elif selected_option == 'postgresql':
-        username = request.form['username']
-        password = request.form['password']
-        database_name = request.form['database_name']
-        query = request.form['query']
-        print(selected_option)
-        res = execute_postgreSQL_query(
-            query, username, password, database_name)
-    elif selected_option == 'couchbase':
-        username = request.form['username']
-        password = request.form['password']
-        database_name = request.form['database_name']
-        query = request.form['query']
-        print(selected_option)
-        res = execute_couchbase_query(query, username, password, database_name)
+        if selected_option == 'mongodb':
+            database_name = request.form['database_name']
+            query = request.form['query']
+            print(selected_option)
+            res = execute_mongodb_query(query, database_name)
+        elif selected_option == 'mysql':
+            username = request.form['username']
+            password = request.form['password']
+            database_name = request.form['database_name']
+            query = request.form['query']
+            print(selected_option)
+            res = execute_mysql_query(query, username, password, database_name)
+        elif selected_option == 'postgresql':
+            username = request.form['username']
+            password = request.form['password']
+            database_name = request.form['database_name']
+            query = request.form['query']
+            print(selected_option)
+            res = execute_postgreSQL_query(
+                query, username, password, database_name)
+        elif selected_option == 'couchbase':
+            username = request.form['username']
+            password = request.form['password']
+            database_name = request.form['database_name']
+            query = request.form['query']
+            print(selected_option)
+            res = execute_couchbase_query(
+                query, username, password, database_name)
 
-    return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2])
+        return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2])
+
+    except Exception as e:
+        error = "Please enter valid credentials or query"
+        return render_template('query_home.html', error=error)
 
 
 '''
@@ -1020,16 +1026,10 @@ def execute_mysql_query(query, db_user, db_password, db_name):
     # Tracker object stops
     obj.stop()
 
-    # store the cpu and ram consumptions,CO2 emissions
-    res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.consumption()))
-    CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
-    res.append("{:.2e}".format(float(CO2_emissions)))
-    res.append(carbon_to_miles(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
-    res.append(carbon_to_tv(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    # store the cpu and ram consumptions
+    res.append(round(obj.cpu_consumption(), 2))
+    res.append(round(obj.ram_consumption(), 2))
+    res.append(round(obj.consumption(), 2))
     return res
 
 
@@ -1048,17 +1048,10 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
     connection.close()
     # Tracker object stops
     obj.stop()
-
     # store the cpu and ram consumptions,CO2 emissions
-    res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.consumption()))
-    CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
-    res.append("{:.2e}".format(float(CO2_emissions)))
-    res.append(carbon_to_miles(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
-    res.append(carbon_to_tv(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    res.append(round(obj.cpu_consumption(), 2))
+    res.append(round(obj.ram_consumption(), 2))
+    res.append(round(obj.consumption(), 2))
     return res
 
 
@@ -1118,15 +1111,9 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
     obj.stop()
 
     # store the cpu and ram consumptions,CO2 emissions
-    res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.consumption()))
-    CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
-    res.append("{:.2e}".format(float(CO2_emissions)))
-    res.append(carbon_to_miles(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
-    res.append(carbon_to_tv(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    res.append(round(obj.cpu_consumption(), 2))
+    res.append(round(obj.ram_consumption(), 2))
+    res.append(round(obj.consumption(), 2))
     return res
 
 
@@ -1249,15 +1236,9 @@ def execute_mongodb_query(query, db_name):
     obj.stop()
 
     # store the cpu and ram consumptions,CO2 emissions
-    res.append("{:.2e}".format(obj.cpu_consumption()))
-    res.append("{:.2e}".format(obj.ram_consumption()))
-    res.append("{:.2e}".format(obj.consumption()))
-    CO2_emissions = obj._construct_attributes_dict()['CO2_emissions(kg)'][0]
-    res.append("{:.2e}".format(float(CO2_emissions)))
-    res.append(carbon_to_miles(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
-    res.append(carbon_to_tv(
-        obj._construct_attributes_dict()['CO2_emissions(kg)'][0]))
+    res.append(round(obj.cpu_consumption(), 2))
+    res.append(round(obj.ram_consumption(), 2))
+    res.append(round(obj.consumption(), 2))
     return res
 
 
