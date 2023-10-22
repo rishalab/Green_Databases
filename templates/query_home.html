@@ -49,8 +49,8 @@
 					<input class="query-btn" type="submit" value="Execute Query">
 				</div>
 			</form>
-			{% if not_query %}
-			<p class="error">{{ not_query }}</p>
+			{% if error %}
+			<p class="error">{{ error }}</p>
 			{% endif %}
 		</div>
 		<button class="query-btn" onclick="window.location.href='{{ url_for('index')}}'">Go back</button>
