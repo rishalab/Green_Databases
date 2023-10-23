@@ -139,15 +139,26 @@ def table_creation():
         return render_template('upload.html')
 
 
-@app.route('/primary_key', methods=['POST'])
+@app.route('/primary_key_choice', methods=['POST'])
 def submit_columns():
     column_names = session.get('column_names', None)
     column_types = [request.form.get(item) for item in column_names]
     session['column_types'] = column_types
+    return render_template('primary_key_choice.html')
+
+
+@app.route('/is_prim_key', methods=['GET', 'POST'])
+def is_prim_key():
+    column_names = session.get('column_names', None)
     return render_template('primary_key.html', items=column_names)
 
 
-@app.route('/database_choice_details', methods=['POST'])
+@app.route('/no_prim_key', methods=['GET', 'POST'])
+def no_prim_key():
+    return render_template('database_choice.html')
+
+
+@app.route('/database_choice_details', methods=['GET', 'POST'])
 def prim_key():
     column_names = session.get('column_names', None)
     primary_key = request.form.get('primary_key')
@@ -156,7 +167,7 @@ def prim_key():
     return render_template('database_choice.html')
 
 
-@app.route('/database_choice_create_table', methods=['POST'])
+@app.route('/database_choice_create_table', methods=['GET', 'POST'])
 def database_choice_details():
     databases = request.form.getlist('databases')
     session['databases'] = databases
@@ -240,6 +251,11 @@ def database_choice_queries():
     sorted_data = {k: v for k, v in sorted(
         query_results.items(), key=lambda item: float(item[1][2]))}
     return render_template('result.html', data=query_results, sorted_data=sorted_data)
+
+
+# @app.route('/primary-key-choice')
+# def primary_key_choice():
+#     return render_template('primary_key_choice.html')
 
 
 @app.route('/choice')
@@ -366,8 +382,8 @@ def create_mysql_table(user, password, database):
     # Remove the trailing comma and space
     create_query = create_query[:-2]
 
-    # if primary_key:
-    #     create_query += f', PRIMARY KEY ({primary_key})'
+    if primary_key:
+        create_query += f', PRIMARY KEY ({primary_key})'
 
     create_query += ');'
     path = 'uploads\\' + filename
@@ -525,7 +541,7 @@ def create_couchbase_collection(user, password):
         collection = bucket.default_collection()
 
         path = 'uploads/' + filename
-
+        print('about to')
         with open(path, 'r') as csv_file:
             # print(path)
             data = csv.reader(csv_file)
@@ -550,7 +566,8 @@ def create_couchbase_collection(user, password):
                 # Assuming primary_key is the ID field
                 unique_key = generate_unique_key()
                 collection.upsert(unique_key, doc)
-        time.sleep(2)
+                print('created')
+        # time.sleep(2)
 
         query = 'CREATE PRIMARY INDEX ON '
         query += bucket_name
