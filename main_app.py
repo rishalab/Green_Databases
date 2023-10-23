@@ -576,19 +576,21 @@ def generate_csv():
         fieldNames.append('CPU consumption')
         fieldNames.append('RAM consumption')
         fieldNames.append('Total consumption')
+        fieldNames.append('Time Taken')
+
     data = {}
     for key, value in database_info.items():
         if key == 'MySQL':
             data['MySQL'] = mysql_queries
-        elif key == 'PostgrSQL':
-            data['PostgrSQL'] = postgresql_queries
+        elif key == 'PostgreSQL':
+            data['PostgreSQL'] = postgresql_queries
         elif key == 'MongoDB':
             data['MongoDB'] = mongodb_queries
         elif key == 'Couchbase':
             data['Couchbase'] = couchbase_queries
     action_functions = {
         'MySQL': execute_mysql_query,
-        'PostgrSQL': execute_postgreSQL_query,
+        'PostgreSQL': execute_postgreSQL_query,
         'MongoDB': execute_mongodb_query,
         'Couchbase': execute_couchbase_query,
     }
@@ -626,12 +628,14 @@ def generate_csv():
     for i in range(0, len(outputs[headers[0]])):
         data_row = []
         for db in headers:
-            data_row.append(outputs[db][i])
+            for x in range(len(outputs[db][i])):
+                data_row.append(outputs[db][i][x])
         csv_data.append(data_row)
     path = 'results/' + file_name
     with open(path, 'w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerows(csv_data)
+    print('csv generated')
     return outputs
 
 
@@ -724,14 +728,14 @@ def enter_queries():
         #                        couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
         #                            4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
         #                        efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
-        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[0], mysql_ram_consumption_j=mysql_res[1], mysql_total_consumption_j=mysql_res[2],
+        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[0], mysql_ram_consumption_j=mysql_res[1], mysql_total_consumption_j=mysql_res[2], mysql_time_taken=mysql_res[3],
                                postgresql_cpu_consumption_j=postgresql_res[0], postgresql_ram_consumption_j=postgresql_res[
-            1], postgresql_total_consumption_j=postgresql_res[2],
-            mongodb_cpu_consumption_j=mongodb_res[0], mongodb_ram_consumption_j=mongodb_res[
-            1], mongodb_total_consumption_j=mongodb_res[2],
-            couchbase_cpu_consumption_j=couchbase_res[0], couchbase_ram_consumption_j=couchbase_res[
-            1], couchbase_total_consumption_j=couchbase_res[2],
-            sorted_total=sorted_total, len=len(sorted_total))
+                                   1], postgresql_total_consumption_j=postgresql_res[2], postgresql_time_taken=postgresql_res[3],
+                               mongodb_cpu_consumption_j=mongodb_res[0], mongodb_ram_consumption_j=mongodb_res[
+                                   1], mongodb_total_consumption_j=mongodb_res[2], mongodb_time_taken=mongodb_res[3],
+                               couchbase_cpu_consumption_j=couchbase_res[0], couchbase_ram_consumption_j=couchbase_res[
+                                   1], couchbase_total_consumption_j=couchbase_res[2], couchbase_time_taken=couchbase_res[3],
+                               sorted_total=sorted_total, len=len(sorted_total))
     else:
         return render_template('upload.html')
 
@@ -830,13 +834,13 @@ def compare():
         #     couchbase_cpu_consumption_kwh=couchbase_res[0], couchbase_cpu_consumption_j=couchbase_res[1], couchbase_ram_consumption_kwh=couchbase_res[2], couchbase_ram_consumption_j=couchbase_res[3], couchbase_total_consumption_kwh=couchbase_res[
         #     4], couchbase_total_consumption_j=couchbase_res[5], couchbase_co2_emissions=couchbase_res[6], couchbase_miles_equvivalence=couchbase_res[7], couchbase_tv_equvivalence=couchbase_res[8],
         #     efficient_total_consumption=eff_res[0], efficient_co2_emissions=eff_res[1], mile_eqivalents=eff_res[2], tv_minutes=eff_res[3])
-        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[0], mysql_ram_consumption_j=mysql_res[1], mysql_total_consumption_j=mysql_res[2],
+        return render_template('compare_result.html', mysql_cpu_consumption_j=mysql_res[0], mysql_ram_consumption_j=mysql_res[1], mysql_total_consumption_j=mysql_res[2], mysql_time_taken=mysql_res[3],
                                postgresql_cpu_consumption_j=postgresql_res[0], postgresql_ram_consumption_j=postgresql_res[
-                                   1], postgresql_total_consumption_j=postgresql_res[2],
+                                   1], postgresql_total_consumption_j=postgresql_res[2], postgresql_time_taken=postgresql_res[3],
                                mongodb_cpu_consumption_j=mongodb_res[0], mongodb_ram_consumption_j=mongodb_res[
-                                   1], mongodb_total_consumption_j=mongodb_res[2],
+                                   1], mongodb_total_consumption_j=mongodb_res[2], mongodb_time_taken=mongodb_res[3],
                                couchbase_cpu_consumption_j=couchbase_res[0], couchbase_ram_consumption_j=couchbase_res[
-                                   1], couchbase_total_consumption_j=couchbase_res[2],
+                                   1], couchbase_total_consumption_j=couchbase_res[2], couchbase_time_taken=couchbase_res[3],
                                sorted_total=sorted_total, len=len(sorted_total))
 
     elif request.method == 'GET':
@@ -990,7 +994,7 @@ def get_single_query_details():
             res = execute_couchbase_query(
                 query, username, password, database_name)
 
-        return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2])
+        return render_template('dbJoules_result.html', cpu_consumption=res[0], ram_consumption=res[1], total_consumption=res[2], time_taken=res[3])
 
     except Exception as e:
         error = "Please enter valid credentials or query"
@@ -1030,6 +1034,7 @@ def execute_mysql_query(query, db_user, db_password, db_name):
     res.append(round(obj.cpu_consumption(), 2))
     res.append(round(obj.ram_consumption(), 2))
     res.append(round(obj.consumption(), 2))
+    res.append(round(float(obj.duration), 2))
     return res
 
 
@@ -1052,6 +1057,7 @@ def execute_postgreSQL_query(postgresql_query, postgresql_user, postgresql_passw
     res.append(round(obj.cpu_consumption(), 2))
     res.append(round(obj.ram_consumption(), 2))
     res.append(round(obj.consumption(), 2))
+    res.append(round(float(obj.duration), 2))
     return res
 
 
@@ -1114,6 +1120,7 @@ def execute_couchbase_query(couchbase_query, couchbase_username, couchbase_passw
     res.append(round(obj.cpu_consumption(), 2))
     res.append(round(obj.ram_consumption(), 2))
     res.append(round(obj.consumption(), 2))
+    res.append(round(float(obj.duration), 2))
     return res
 
 
@@ -1239,6 +1246,7 @@ def execute_mongodb_query(query, db_name):
     res.append(round(obj.cpu_consumption(), 2))
     res.append(round(obj.ram_consumption(), 2))
     res.append(round(obj.consumption(), 2))
+    res.append(round(float(obj.duration), 2))
     return res
 
 

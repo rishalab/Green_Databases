@@ -29,13 +29,13 @@ class RAM():
                 pinfo = proc.as_dict(attrs=['name', 'pid', 'memory_percent'])
 
                 if pinfo['pid'] == current_pid:
-                    print(pinfo['pid'])
+                    # print(pinfo['pid'])
                     memory_percent = float(pinfo['memory_percent'])
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
 
         total_memory = psutil.virtual_memory().total / (1024 ** 3)
-        print(memory_percent * total_memory / 100)
+        # print(memory_percent * total_memory / 100)
         return memory_percent * total_memory / 100
 
     def calculate_consumption(self):
