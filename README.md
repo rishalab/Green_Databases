@@ -1,5 +1,5 @@
-# RJoules
-Towards Developing Energy Efficient R Programming
+# DBJoules
+Towards Energy Efficient Databases
 # Description
 DBJoules measures the energy consumption of queries written in various databases. This tool can be serves as a valuable resource for developers and practitioners seeking to develop energy-aware application.
 
